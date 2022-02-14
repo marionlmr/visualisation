@@ -14,7 +14,7 @@ doc <- tags$html(
   tags$body(
     h1('Indice du bonheur dans le monde', style = "text-align: center; background-color: #C70039; color: white;"),
     p("Notre base de données est issue du site “kaggle”. Elle se nomme ", strong("“Le bonheur dans le monde”."), 
-    " Elle comporte 149 pays pour lesquels nous disposons de leur zone géographique, ainsi que des 
+      " Elle comporte 149 pays pour lesquels nous disposons de leur zone géographique, ainsi que des 
 indicateurs comme l’indice de bonheur, le PIB par habitant (log), le soutien social, l’espérance de vie
 en bonne santé, la liberté de faire des choix, les perceptions de corruption ou la générosité.", style = "text-align: justify;"),
     p("Les zones géographiques présentes dans notre base de données sont : Europe centrale et orientale, 
@@ -69,15 +69,15 @@ suivants ils avaient entrepris au cours du mois précédent : aider un étranger
 connaissaient pas et qui avait besoin d’aide ; fait un don d'argent à un organisme de bienfaisance ; 
 donner de leur temps à une organisation. ", style = "text-align: justify;")),
   tags$footer(
-  p("Application réalisée par 3 étudiantes de master 1 MAS à Rennes 2.", style = "text-align: center;"),
-  img(src = "https://upload.wikimedia.org/wikipedia/fr/2/23/Logo_univ-rennes2-2016.svg", width = "100px", height = "100px"),
-  p("Lou-Anne Guillotel, Marion Lemer & Floriane Mézirard", style = "text-align: center;"),
-  p("Date de création mars 2022", style = "text-align: center;"),
-  style = "background-color: #C70039; color: white;"
+    p("Application réalisée par 3 étudiantes de master 1 MAS, Science des données, IA à Rennes 2.", style = "text-align: center;"),
+    img(src = "https://upload.wikimedia.org/wikipedia/fr/2/23/Logo_univ-rennes2-2016.svg", width = "100px", height = "100px"),
+    p("Lou-Anne Guillotel, Marion Lemer & Floriane Mézirard", style = "text-align: center;"),
+    p("Date de création mars 2022", style = "text-align: center;"),
+    style = "background-color: #C70039; color: white;"
     
-  #   div(id='myDiv', class='simpleDiv',
-  #       'Here is a div with some attributes.')
-   )
+    #   div(id='myDiv', class='simpleDiv',
+    #       'Here is a div with some attributes.')
+  )
 )
 
 # Define UI for application that draws a histogram
@@ -87,7 +87,7 @@ shinyUI(
              
              tabPanel("Présentation",
                       doc),
-                      
+             
              # premier onglet Data
              tabPanel("Data", 
                       navlistPanel("Sélection de la visualisation pour le jeu de données",
@@ -111,7 +111,7 @@ shinyUI(
                                                           textInput(inputId = "titre", label = "Titre :", value = "Histogramme"),
                                                           
                                                           # selection de la colonne
-                                                          radioButtons(inputId = "choix_colonne", label = "Variable : ", choices = colnames(donnees)),
+                                                          radioButtons(inputId = "choix_colonne", label = "Variables : ", choices = colnames(donnees)[8:14]),
                                                           actionButton("go_graph", "Update !")
                       )),
                       column(width = 9, 
@@ -120,18 +120,22 @@ shinyUI(
                                                   div(textOutput("n_bins"), align = "center")),
                                          tabPanel("Boxplot",plotOutput("distPlot1"))
                              )
-                      ),
-                      column(width = 5,
                       )
-                      
-                      )
-             ),
+             )),
              
              # Troisième onglet Cartographie
              tabPanel("Cartographie",
-                      plotOutput("map")
-                      
-             ),
+             fluidRow(column(width = 3,wellPanel(# selection de la colonne
+                                                 radioButtons(inputId = "choix_colonne_carte", label = "Variables : ", choices = colnames(donnees)[8:14]),
+                                                 radioButtons(inputId = "choix_annees", label = "Années : ", choices = sort(unique(donnees$Annees))),
+                                                 actionButton("go_graph_carte", "Update !")
+             )),
+             column(width = 9, 
+                    tabsetPanel(id="viz",
+                                tabPanel("Cartographie", plotOutput("map"))
+                    )
+             )
+  )),
              
              # Quatième onglet Modèle : Régression
              tabPanel("Modèles", 
