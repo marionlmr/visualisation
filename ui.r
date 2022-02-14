@@ -6,6 +6,8 @@ library(DT)
 library(tidyverse)
 library(leaflet)
 library(viridis)
+library(corrplot)
+library(stargazer)
 
 doc <- tags$html(
   tags$head(
@@ -111,7 +113,9 @@ shinyUI(
                                                           textInput(inputId = "titre", label = "Titre :", value = "Histogramme"),
                                                           
                                                           # selection de la colonne
-                                                          radioButtons(inputId = "choix_colonne", label = "Variables : ", choices = colnames(donnees)[8:14]),
+                                                          radioButtons(inputId = "choix_colonne", label = "Variables : ", choices = colnames(donnees)[3:9]),
+                                                          # filtre sur les lignes - choix de l'année
+                                                          radioButtons(inputId = "choix_annee_hist", label = "Années : ", choices = sort(unique(donnees$Annees))),
                                                           actionButton("go_graph", "Update !")
                       )),
                       column(width = 9, 
@@ -126,12 +130,12 @@ shinyUI(
              # Troisième onglet Cartographie
              tabPanel("Cartographie",
              fluidRow(column(width = 3,wellPanel(# selection de la colonne
-                                                 radioButtons(inputId = "choix_colonne_carte", label = "Variables : ", choices = colnames(donnees)[8:14]),
-                                                 radioButtons(inputId = "choix_annees", label = "Années : ", choices = sort(unique(donnees$Annees))),
+                                                 radioButtons(inputId = "choix_colonne_carte", label = "Variables : ", choices = colnames(donnees_carto)[8:14]),
+                                                 radioButtons(inputId = "choix_annees", label = "Années : ", choices = sort(unique(donnees_carto$Annees))),
                                                  actionButton("go_graph_carte", "Update !")
              )),
-             column(width = 9, 
-                    tabsetPanel(id="viz",
+             column(width = 9,
+                    tabsetPanel(id="carto",
                                 tabPanel("Cartographie", plotOutput("map"))
                     )
              )
@@ -139,7 +143,45 @@ shinyUI(
              
              # Quatième onglet Modèle : Régression
              tabPanel("Modèles", 
-                      navlistPanel("Sélection des variables explicatives")
+                      tabsetPanel(id="modele",
+                                  tabPanel("Corrélation", 
+                                           fluidRow(column(width = 3,
+                                                           wellPanel(
+                                                            # filtre sur les lignes - choix de l'année
+                                                            radioButtons(inputId = "choix_annee_cor", label = "Années : ", choices = 2006:2021),
+                                                            # filtre sur les régions - choix des zones géographiques
+                                                            actionButton(inputId = "zone", label = "Ajout zones géographiques"),
+                                                            radioButtons(inputId = "choix_zone_cor", label = "Zones géographiques : ", choices = sort(unique(donnees$Region)))
+                                                                    )
+                                                           ),
+                                             
+                                             column(width = 9,plotOutput("correlogramme")))),
+                                  tabPanel("Régression 2 variables",
+                                           fluidRow(column(width = 3,
+                                                           wellPanel(
+                                                             # filtre sur les lignes - choix de l'année
+                                                             radioButtons(inputId = "choix_annee_reg_2var", label = "Années : ", choices = 2006:2021),
+                                                             # sélection colonne 
+                                                             radioButtons(inputId = "choix_colonne_reg_2var", label = "Variable explicative : ", choices = colnames(donnees)[4:9])
+                                                           )
+                                           ),
+                                           
+                                           column(width = 9,
+                                           plotOutput("reg_2var_graph"),
+                                           div(textOutput("reg_2var_summary"), align = "center")))
+                                           ),
+                                  tabPanel("Régression multiples",
+                                           fluidRow(column(width = 3,
+                                                           wellPanel(
+                                                             # filtre sur les lignes - choix de l'année
+                                                             radioButtons(inputId = "choix_annee_reg_mul", label = "Années : ", choices = 2006:2021),
+                                                             # sélection colonne 
+                                                             radioButtons(inputId = "choix_colonnes_reg_mul", label = "Variables explicatives : ", choices = colnames(donnees)[4:9])
+                                                           ),
+                                                    column(width = 9,
+                                                    textOutput("reg_mult"))))
+                                  )
+                      ) 
                       
              ),
              
