@@ -4,6 +4,8 @@ library(shinydashboard)
 library(rAmCharts)
 library(DT)
 library(tidyverse)
+library(leaflet)
+library(viridis)
 
 doc <- tags$html(
   tags$head(
@@ -126,7 +128,8 @@ shinyUI(
              ),
              
              # Troisième onglet Cartographie
-             tabPanel("Cartographie"
+             tabPanel("Cartographie",
+                      plotOutput("map")
                       
              ),
              

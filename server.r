@@ -6,18 +6,25 @@ shinyServer(function(input, output,session) {
   # Imporation jeux de données
   # Nettoyage + fusion 
   
+  # Ouverture premiere BDD relative à l'année 2021
   donnees <- read.csv("world-happiness-report-2021.csv")
   donnees <- donnees[,c(1:3,7:12)]
   colnames(donnees) <- c("Pays","Région","Indice_du_bonheur","log_PIB_par_hab","Soutien_social","Espérance_de_vie_en_bonne_santé","Liberté_de_faire_des_choix","Générosité","Perception_de_corruption")
   donnees$Années <- 2021
+  donnees$Pays[donnees$Pays == "Congo (Brazzaville)"] = 'Republic of Congo'
+  donnees$Pays[donnees$Pays == "United States"] = 'USA'
+  carte.monde <- map_data("world")
+  colnames(carte.monde)[5] <- "Pays"
+  fusion <- left_join(carte.monde, donnees, by="Pays")
   
+  # Ouverture de la deuxième BDD 
   donnees_annees <- read.csv("world-happiness-report.csv")
   donnees_annees <- donnees_annees[,1:9]
   colnames(donnees_annees) <- c("Pays","Années","Indice_du_bonheur","log_PIB_par_hab","Soutien_social","Espérance_de_vie_en_bonne_santé","Liberté_de_faire_des_choix","Générosité","Perception_de_corruption")
-  donnees_annees <- merge(donnees[,c("Région","Pays")], donnees_annees, by="Pays")
+  donnees_annees <- merge(fusion[,c("Région","Pays","long","lat")], donnees_annees, by="Pays")
   
   # Jeu de données final pour notre étude
-  donnees <- full_join(donnees, donnees_annees)
+  donnees <- left_join(fusion, donnees_annees)
   
   
   output$distPlot <-renderAmCharts({
@@ -59,5 +66,15 @@ shinyServer(function(input, output,session) {
   observeEvent(input$go_graph,{
     updateTabsetPanel(session,inputId = "viz",selected="Histogramme")
   })
+  
+  # carte
+  output$map= renderPlot(ggplot(donnees, aes(x=long, y=lat,group=group))+
+    geom_polygon(aes(fill= Indice_du_bonheur))+
+    scale_fill_viridis_c(option = "inferno")+
+    ggtitle(label = "Carte du monde pour l'indice de bonheur")+
+    theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5), panel.background = element_blank(), panel.grid.major = element_line(colour = "grey"))+
+    ylab("Latitude")+
+    xlab("Longitude")+
+    labs(fill = "Indice de bonheur"))
   
 })
