@@ -20,15 +20,13 @@ shinyServer(function(input, output,session) {
   colnames(donnees_annees) <- c("Pays","Annees","Indice_du_bonheur","log_PIB_par_hab","Soutien_social","Esperance_de_vie_en_bonne_sante","Liberte_de_faire_des_choix","Generosite","Perception_de_corruption")
   donnees_annees <- merge(donnees[,c("Region","Pays")], donnees_annees, by="Pays") #,"long","lat","group","order","subregion"
   
-  # Jeu de donnees final pour notre etude
+  # Jeu de donnees final pour notre etude : 1 ligne par année (si dispo) et par pays 
   donnees <- full_join(donnees, donnees_annees)
   
   # données pour carto
-  # carte.monde <- map_data("world")
-  # colnames(carte.monde)[5] <- "Pays"
-  # fusion <- left_join(carte.monde, donnees, by="Pays")
-  # donnees_annees <- merge(fusion[,c("Region","Pays","long","lat","group","order","subregion")], donnees_annees, by="Pays") 
-  # donnees_carto <- full_join(fusion, donnees_annees)
+  carte.monde <- map_data("world")
+  colnames(carte.monde)[5] <- "Pays"
+  donnees_carto <- left_join(carte.monde, donnees, by="Pays")
   
   # Onglet donnees
   # summary
@@ -82,7 +80,7 @@ shinyServer(function(input, output,session) {
       
       ggplot(donnees_bis, aes(x=long, y=lat,group=group,fill= input$choix_colonne_carte))+
         geom_polygon()+
-        #scale_fill_viridis_c(option = "inferno")+
+        scale_fill_viridis_d(option = "inferno")+
         ggtitle(label = "Carte du monde pour l'indice de bonheur")+
         theme(plot.title = element_text(size = 14, face = "bold", hjust = 0.5), panel.background = element_blank(), panel.grid.major = element_line(colour = "grey"))+
         ylab("Latitude")+
