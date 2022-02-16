@@ -9,6 +9,7 @@ library(viridis)
 library(corrplot)
 library(stargazer)
 library(plotly)
+library(FactoMineR)
 
 doc <- tags$html(
   tags$head(
@@ -147,7 +148,7 @@ shinyUI(
              # Second onglet : Data
              tabPanel("Data", 
                       navlistPanel("Jeu de données", widths = c(2,10), 
-                                   tabPanel("Tableau", h1("Données", style = "color: #C70039;"),DTOutput("table")),
+                                   tabPanel("Tableau", h1("Données", style = "color: #C70039; text-align: center"),DTOutput("table")),
                                    tabPanel("Résumé", verbatimTextOutput("summary")))
                       
              ), 
@@ -155,34 +156,56 @@ shinyUI(
              
              # Troisième onglet : Visualisation
              tabPanel("Visualisation", 
-                      fluidRow(column(width = 3, wellPanel(sliderInput(inputId = "bins",
-                                                                       label = "Nombre de classes :",
-                                                                       min = 1,
-                                                                       max = 20,
-                                                                       value = 10),
-                                                          
-                                                          # input pour la couleur
-                                                          colourInput(inputId = "color", label = "Couleur :", value = "#C70039"),
-                                                          
-                                                          # titre du graphique
-                                                          textInput(inputId = "titre", label = "Titre :", value = "Histogramme"),
-                                                          
-                                                          # selection de la colonne
-                                                          radioButtons(inputId = "choix_colonne", label = "Variables : ", choiceValues = colnames(donnees)[3:9], 
-                                                                       choiceNames = c("Indice du bonheur", "log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
-                                                                                       "Liberté de faire des choix", "Générosité", "Perception de corruption")),
-                                                          # filtre sur les lignes - choix de l'année
-                                                          selectInput(inputId = "choix_annee_hist", label = "Années : ", choices = sort(unique(donnees$Annees))),
-                                                          actionButton("go_graph", "Update !")
-                      )),
-                      column(width = 9, 
-                             tabsetPanel(id="viz",
-                                         tabPanel("Histogramme", amChartsOutput("distPlot"), 
-                                                  div(textOutput("n_bins"), align = "center")),
-                                         tabPanel("Boxplot",plotOutput("distPlot1"))
-                             )
+                      tabsetPanel(
+                        tabPanel("Visualisation",
+                        tabsetPanel(fluidRow(column(width = 3, wellPanel(sliderInput(inputId = "bins",
+                                                                                     label = "Nombre de classes :",
+                                                                                     min = 1,
+                                                                                     max = 20,
+                                                                                     value = 10),
+                                                                         
+                                                                         # input pour la couleur
+                                                                         colourInput(inputId = "color", label = "Couleur :", value = "#C70039"),
+                                                                         
+                                                                         # titre du graphique
+                                                                         textInput(inputId = "titre", label = "Titre :", value = "Histogramme"),
+                                                                         
+                                                                         # selection de la colonne
+                                                                         radioButtons(inputId = "choix_colonne", label = "Variables : ", choiceValues = colnames(donnees)[3:9], 
+                                                                                      choiceNames = c("Indice du bonheur", "log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
+                                                                                                      "Liberté de faire des choix", "Générosité", "Perception de corruption")),
+                                                                         # filtre sur les lignes - choix de l'année
+                                                                         selectInput(inputId = "choix_annee_hist", label = "Années : ", choices = sort(unique(donnees$Annees)), selected = 2021),
+                                                                         actionButton("go_graph", "Update !")
+                                                                        )
+                                                    ),
+                                            column(width = 9, 
+                                                  tabsetPanel(id="viz",
+                                                              tabPanel("Histogramme", amChartsOutput("distPlot"), 
+                                                              div(textOutput("n_bins"), align = "center")),
+                                                              tabPanel("Boxplot",plotOutput("distPlot1"))
+                                                              )
+                                                    )
+                                          )
+                                  )
+                            ),
+                      tabPanel("ACP",
+                               tabsetPanel(fluidRow(column(width = 2, 
+                                                           wellPanel(# filtre sur les lignes - choix de l'année
+                                                                    selectInput(inputId = "choix_annee_ACP", label = "Années : ", choices = sort(unique(donnees$Annees)), selected = 2021)
+                                                                    )
+                                                          ),
+                                                    column(width = 5,
+                                                           plotOutput("acpind")
+                                                           ),
+                                                    column(width = 5,
+                                                           plotOutput("acpvar")
+                                                           )
+                                                    )
+                                          )
+                               )
                       )
-                      )),
+                      ),
              
              
              # Quatième onglet : Cartographie
@@ -191,7 +214,7 @@ shinyUI(
                         radioButtons(inputId = "choix_colonne_carte", label = "Variables : ", choiceValues = colnames(donnees)[3:9],
                                      choiceNames = c("Indice du bonheur", "log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
                                                      "Liberté de faire des choix", "Générosité", "Perception de corruption")),
-                        selectInput(inputId = "choix_annees", label = "Années : ", choices = sort(unique(donnees$Annees))),
+                        selectInput(inputId = "choix_annees", label = "Années : ", choices = sort(unique(donnees$Annees)), selected = 2021),
                         actionButton("go_graph_carte", "Update !")
                       )),
                       column(width = 9,
@@ -200,8 +223,7 @@ shinyUI(
                              )
                       )
                       )),
-             
-             
+
              # Cinquième onglet : Modèle - Régression
              tabPanel("Modèles", 
                       tabsetPanel(id="modele",
@@ -209,10 +231,10 @@ shinyUI(
                                            fluidRow(column(width = 3,
                                                            wellPanel(
                                                              # filtre sur les lignes - choix de l'année
-                                                             selectInput(inputId = "choix_annee_cor", label = "Années : ", choices = 2006:2021),
+                                                             selectInput(inputId = "choix_annee_cor", label = "Années : ", choices = 2006:2021, selected = 2021),
                                                              # filtre sur les régions - choix des zones géographiques
                                                              actionButton(inputId = "zone", label = "Ajout zones géographiques"),
-                                                             radioButtons(inputId = "choix_zone_cor", label = "Zones géographiques : ", choices = sort(unique(donnees$Region)))
+                                                             checkboxGroupInput(inputId = "choix_zone_cor", label = "Zones géographiques : ", choices = sort(unique(donnees$Region)), selected = unique(donnees$Region))
                                                            )
                                            ),
                                            
@@ -221,38 +243,54 @@ shinyUI(
                                            fluidRow(column(width = 3,
                                                            wellPanel(
                                                              # filtre sur les lignes - choix de l'année
-                                                             selectInput(inputId = "choix_annee_reg_2var", label = "Années : ", choices = 2006:2021),
+                                                             selectInput(inputId = "choix_annee_reg_2var", label = "Années : ", choices = 2006:2021, selected = 2021),
                                                              # sélection colonne 
                                                              radioButtons(inputId = "choix_colonne_reg_2var", label = "Variable explicative : ", choiceValues = colnames(donnees)[4:9],
                                                                           choiceNames = c("log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
-                                                                                          "Liberté de faire des choix", "Générosité", "Perception de corruption"))
+                                                                                          "Liberté de faire des choix", "Générosité", "Perception de corruption")),
+                                                             checkboxGroupInput(inputId = "choix_zone_reg_2var", label = "Zones géographiques : ", choices = sort(unique(donnees$Region)), selected = unique(donnees$Region))
                                                            )
                                            ),
                                            
                                            column(width = 9,
                                                   plotOutput("reg_2var_graph"),
-                                                  div(textOutput("reg_2var_summary"), align = "center")))
+                                                  div(textOutput("reg_2var_summary"), align = "center")),
+                                           column(
+                                             width = 9,
+                                             plotOutput("eval_residus_reg_2var"),
+                                             p("Les pointillées horizontaux, sont les intervalles de confiance du coefficient 
+                                               de corrélation égal à 0. Les traits verticaux représentent les coefficients de corrélation 
+                                               entre les résidus de chaque point et ceux des points de la ligne suivante (lag=1), 
+                                               ou ceux séparés de deux lignes (lag=2) etc…",style = "text-align: justify;")
+                                           ))
                                   ),
                                   tabPanel("Régression linéaire multiple",
                                            fluidRow(column(width = 3,
                                                            wellPanel(
                                                              # filtre sur les lignes - choix de l'année
-                                                             selectInput(inputId = "choix_annee_reg_mul", label = "Années : ", choices = 2006:2021),
+                                                             selectInput(inputId = "choix_annee_reg_mul", label = "Années : ", choices = 2006:2021, selected = 2021),
                                                              # sélection colonne 
-                                                             radioButtons(inputId = "choix_colonnes_reg_mul", label = "Variables explicatives : ", choiceValues = colnames(donnees)[4:9],
+                                                             checkboxGroupInput(inputId = "choix_colonnes_reg_mul", label = "Variables explicatives : ", choiceValues = colnames(donnees)[4:9],
                                                                           choiceNames = c("log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
-                                                                                          "Liberté de faire des choix", "Générosité", "Perception de corruption"))
-                                                           ),
-                                                           column(width = 9,
-                                                                  textOutput("reg_mult"))))
-                                  )
+                                                                                          "Liberté de faire des choix", "Générosité", "Perception de corruption"), selected = colnames(donnees)[4]),
+                                                             checkboxGroupInput(inputId = "choix_zone_reg_mul", label = "Zones géographiques : ", choices = sort(unique(donnees$Region)), selected = unique(donnees$Region))
+                                                           )),
+                                                      column(
+                                                        width = 9, 
+                                                        textOutput("reg_mult")
+                                                            )
+                                                    )
+                                        )
                       ) 
-                      
              ),
              
+             # Sixième onglet : Comparaison des pays et comparaison des années
+             tabPanel("Evolutions",
+                      navlistPanel("Sélection des variables :")
+             ),
              
-             # Sizième onglet : Comparaison des pays et comparaison des années
-             tabPanel("Comparaisons",
+             # Septieme onglet : Comparaison des pays et comparaison des années
+             tabPanel("Comparaisons 2 pays",
                       navlistPanel("Sélection des variables : années, pays")
              )
   )

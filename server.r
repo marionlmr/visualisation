@@ -9,6 +9,9 @@ library(viridis)
 library(corrplot)
 library(stargazer)
 library(plotly)
+library(hrbrthemes)
+library(car)
+library(FactoMineR)
 
 shinyServer(function(input, output, session) {
   
@@ -74,7 +77,7 @@ shinyServer(function(input, output, session) {
       x <- donnees[donnees$Annees == input$choix_annee_hist, input$choix_colonne] 
       bins <- seq(min(x, na.rm=TRUE), max(x,na.rm=TRUE),  input$bins + 1)
       # use amHist
-      amHist(x = x, col = input$color, main = input$titre, export = TRUE, zoom = TRUE, control_hist = list(breaks = bins)) 
+      amHist(x = x, col = input$color, main = input$titre, export = TRUE, zoom = TRUE) #, control_hist = list(breaks = bins)
     })
   })
   
@@ -86,6 +89,15 @@ shinyServer(function(input, output, session) {
     boxplot(x, col = input$color, main = input$titre)
   })
   
+  output$acpvar <- renderPlot({
+    donnees <- donnees[donnees$Annees == input$choix_annee_ACP,3:9]
+    PCA(donnees)
+  })
+  
+  output$acpind <- renderPlot({
+    donnees <- donnees[donnees$Annees == input$choix_annee_ACP,3:9]
+    plot(PCA(donnees),choix="ind")
+  })
   
   # Onglet cartographie
   # carte
@@ -103,8 +115,11 @@ shinyServer(function(input, output, session) {
       l <- list(color = toRGB("grey"), width = 0.5)
       # Spécifier la projection/options de la carte
       g <- list(
+        scope = "world",
+        showland = TRUE,
+        landcolor = toRGB("gray85"),
         showframe = FALSE,
-        showcoastlines = FALSE,
+        showcoastlines = FALSE, 
         projection = list(type = 'Mercator')
       )
       fig <- plot_geo(df)
@@ -144,9 +159,10 @@ shinyServer(function(input, output, session) {
   
   # Regression simple
   output$reg_2var_graph <- renderPlot({
-    donnees <- donnees[donnees$Annees == input$choix_annee_reg_2var,c(input$choix_colonne_reg_2var,"Indice_du_bonheur")]  
+    donnees <- donnees[donnees$Annees == input$choix_annee_reg_2var & donnees$Region == input$choix_zone_reg_2var,c(input$choix_colonne_reg_2var,"Indice_du_bonheur")]  
     donnees <- donnees %>% drop_na()
-    plot(Indice_du_bonheur~., data=donnees)
+   # plot(Indice_du_bonheur~., data=donnees)
+    scatterplot(Indice_du_bonheur~., data=donnees)
     # ggplot(data = donnees) +
     #   aes(x = input$choix_colonne_reg_2var, y = Indice_du_bonheur) +
     #   geom_point() +
@@ -154,7 +170,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$reg_2var_summary <- renderPrint({
-    donnees <- donnees[donnees$Annees == input$choix_annee_reg_2var,c(input$choix_colonne_reg_2var,"Indice_du_bonheur")] 
+    donnees <- donnees[donnees$Annees == input$choix_annee_reg_2var & donnees$Region == input$choix_zone_reg_2var,c(input$choix_colonne_reg_2var,"Indice_du_bonheur")] 
     donnees <- donnees %>% drop_na()
     reg_2var <- lm(Indice_du_bonheur~., data = donnees)
     summary(reg_2var)
@@ -162,12 +178,19 @@ shinyServer(function(input, output, session) {
     stargazer(reg_2var, type="text", title="Régression simple")
   })
   
+  output$eval_residus_reg_2var <- renderPlot({
+    donnees <- donnees[donnees$Annees == input$choix_annee_reg_2var & donnees$Region == input$choix_zone_reg_2var,c(input$choix_colonne_reg_2var,"Indice_du_bonheur")] 
+    donnees <- donnees %>% drop_na()
+    reg_2var <- lm(Indice_du_bonheur~., data = donnees)
+    acf(residuals(reg_2var), main="Evaluation de l'hypothèse d'indépendance des résidus") 
+  })
+  
   # Regression multiple
   output$reg_mult <- renderPrint({
-    donnees <- donnees[donnees$Annees == input$choix_annee_reg_mul,] 
+    donnees <- donnees[donnees$Annees == input$choix_annee_reg_mul & donnees$Region == input$choix_zone_reg_mul,c(input$choix_colonnes_reg_mul,"Indice_du_bonheur")] 
     donnees <- donnees %>% drop_na()
     
-    reg_mul <- lm(Indice_du_bonheur~input$choix_colonnes_reg_mul, data=donnees)
+    reg_mul <- lm(Indice_du_bonheur~., data=donnees)
     summary(reg_mul)
     
     stargazer(reg_mul, type="text", title="Régression simple")
