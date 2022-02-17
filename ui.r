@@ -18,7 +18,7 @@ doc <- tags$html(
   
   tags$body(
     h1('Indice du bonheur dans le monde', style = "text-align: center; background-color: #C70039; color: white;"),
-
+    
     p("Notre base de données est issue du site “kaggle”. Elle se nomme ", strong("“Le bonheur dans le monde”."), 
       " Elle comporte 149 pays pour lesquels nous disposons de leur zone géographique, ainsi que des 
 indicateurs comme l’indice de bonheur, le PIB par habitant (log), le soutien social, l’espérance de vie
@@ -127,6 +127,24 @@ tmp <- merge(data.frame(Pays = donnees_2021$Pays, Region = donnees_2021$Region),
 donnees_annees$Region <- tmp$Region
 donnees <- rbind(donnees_2021, donnees_annees)
 
+donnees$Region[donnees$Pays == "Angola"] <- "Sub-Saharan Africa"                
+donnees$Region[donnees$Pays == "Belize"] <- "Latin America and Caribbean"
+donnees$Region[donnees$Pays == "Bhutan"] <- "South Asia"
+donnees$Region[donnees$Pays == "Central African Republic"] <- "Sub-Saharan Africa"                
+donnees$Region[donnees$Pays == "Congo (Kinshasa)"] <- "Sub-Saharan Africa" 
+donnees$Region[donnees$Pays == "Cuba"] <- "Latin America and Caribbean"
+donnees$Region[donnees$Pays == "Djibouti"] <- "Sub-Saharan Africa"                
+donnees$Region[donnees$Pays == "Guyana"] <- "Latin America and Caribbean"
+donnees$Region[donnees$Pays == "Oman"] <- "Middle East and North Africa"
+donnees$Region[donnees$Pays == "Qatar"] <- "Middle East and North Africa"                
+donnees$Region[donnees$Pays == "Somalia"] <- "Middle East and North Africa" # ou Afrique
+donnees$Region[donnees$Pays == "Somaliland region"] <- "Middle East and North Africa" # ou Afrique
+donnees$Region[donnees$Pays == "South Sudan"] <- "Sub-Saharan Africa"                
+donnees$Region[donnees$Pays == "Sudan"] <- "Sub-Saharan Africa"
+donnees$Region[donnees$Pays == "Suriname"] <- "Latin America and Caribbean"
+donnees$Region[donnees$Pays == "Syria"] <- "Middle East and North Africa"                
+donnees$Region[donnees$Pays == "Trinidad and Tobago"] <- "Latin America and Caribbean"
+
 
 # Données carte
 # On télécharge le nom des pays associé à leur code ISO (3 lettres)
@@ -158,54 +176,54 @@ shinyUI(
              tabPanel("Visualisation", 
                       tabsetPanel(
                         tabPanel("Visualisation",
-                        tabsetPanel(fluidRow(column(width = 3, wellPanel(sliderInput(inputId = "bins",
-                                                                                     label = "Nombre de classes :",
-                                                                                     min = 1,
-                                                                                     max = 20,
-                                                                                     value = 10),
-                                                                         
-                                                                         # input pour la couleur
-                                                                         colourInput(inputId = "color", label = "Couleur :", value = "#C70039"),
-                                                                         
-                                                                         # titre du graphique
-                                                                         textInput(inputId = "titre", label = "Titre :", value = "Histogramme"),
-                                                                         
-                                                                         # selection de la colonne
-                                                                         radioButtons(inputId = "choix_colonne", label = "Variables : ", choiceValues = colnames(donnees)[3:9], 
-                                                                                      choiceNames = c("Indice du bonheur", "log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
-                                                                                                      "Liberté de faire des choix", "Générosité", "Perception de corruption")),
-                                                                         # filtre sur les lignes - choix de l'année
-                                                                         selectInput(inputId = "choix_annee_hist", label = "Années : ", choices = sort(unique(donnees$Annees)), selected = 2021),
-                                                                         actionButton("go_graph", "Update !")
-                                                                        )
-                                                    ),
-                                            column(width = 9, 
-                                                  tabsetPanel(id="viz",
-                                                              tabPanel("Histogramme", amChartsOutput("distPlot"), 
-                                                              div(textOutput("n_bins"), align = "center")),
-                                                              tabPanel("Boxplot",plotOutput("distPlot1"))
-                                                              )
-                                                    )
-                                          )
-                                  )
-                            ),
-                      tabPanel("ACP",
-                               tabsetPanel(fluidRow(column(width = 2, 
-                                                           wellPanel(# filtre sur les lignes - choix de l'année
-                                                                    selectInput(inputId = "choix_annee_ACP", label = "Années : ", choices = sort(unique(donnees$Annees)), selected = 2021)
-                                                                    )
-                                                          ),
-                                                    column(width = 5,
-                                                           plotOutput("acpind")
-                                                           ),
-                                                    column(width = 5,
-                                                           plotOutput("acpvar")
-                                                           )
-                                                    )
-                                          )
-                               )
+                                 tabsetPanel(fluidRow(column(width = 3, wellPanel(sliderInput(inputId = "bins",
+                                                                                              label = "Nombre de classes :",
+                                                                                              min = 1,
+                                                                                              max = 20,
+                                                                                              value = 10),
+                                                                                  
+                                                                                  # input pour la couleur
+                                                                                  colourInput(inputId = "color", label = "Couleur :", value = "#C70039"),
+                                                                                  
+                                                                                  # titre du graphique
+                                                                                  textInput(inputId = "titre", label = "Titre :", value = "Histogramme"),
+                                                                                  
+                                                                                  # selection de la colonne
+                                                                                  radioButtons(inputId = "choix_colonne", label = "Variables : ", choiceValues = colnames(donnees)[3:9], 
+                                                                                               choiceNames = c("Indice du bonheur", "log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
+                                                                                                               "Liberté de faire des choix", "Générosité", "Perception de corruption")),
+                                                                                  # filtre sur les lignes - choix de l'année
+                                                                                  selectInput(inputId = "choix_annee_hist", label = "Années : ", choices = sort(unique(donnees$Annees)), selected = 2021),
+                                                                                  actionButton("go_graph", "Update !")
+                                 )
+                                 ),
+                                 column(width = 9, 
+                                        tabsetPanel(id="viz",
+                                                    tabPanel("Histogramme", amChartsOutput("distPlot"), 
+                                                             div(textOutput("n_bins"), align = "center")),
+                                                    tabPanel("Boxplot",plotOutput("distPlot1"))
+                                        )
+                                 )
+                                 )
+                                 )
+                        ),
+                        tabPanel("ACP",
+                                 tabsetPanel(fluidRow(column(width = 2, 
+                                                             wellPanel(# filtre sur les lignes - choix de l'année
+                                                               selectInput(inputId = "choix_annee_ACP", label = "Années : ", choices = sort(unique(donnees$Annees)), selected = 2021)
+                                                             )
+                                 ),
+                                 column(width = 5,
+                                        plotOutput("acpind")
+                                 ),
+                                 column(width = 5,
+                                        plotOutput("acpvar")
+                                 )
+                                 )
+                                 )
+                        )
                       )
-                      ),
+             ),
              
              
              # Quatième onglet : Cartographie
@@ -223,7 +241,7 @@ shinyUI(
                              )
                       )
                       )),
-
+             
              # Cinquième onglet : Modèle - Régression
              tabPanel("Modèles", 
                       tabsetPanel(id="modele",
@@ -253,7 +271,7 @@ shinyUI(
                                            ),
                                            
                                            column(width = 9,
-                                                  plotOutput("reg_2var_graph"),
+                                                  plotlyOutput("reg_2var_graph"),
                                                   div(textOutput("reg_2var_summary"), align = "center")),
                                            column(
                                              width = 9,
@@ -271,23 +289,35 @@ shinyUI(
                                                              selectInput(inputId = "choix_annee_reg_mul", label = "Années : ", choices = 2006:2021, selected = 2021),
                                                              # sélection colonne 
                                                              checkboxGroupInput(inputId = "choix_colonnes_reg_mul", label = "Variables explicatives : ", choiceValues = colnames(donnees)[4:9],
-                                                                          choiceNames = c("log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
-                                                                                          "Liberté de faire des choix", "Générosité", "Perception de corruption"), selected = colnames(donnees)[4]),
+                                                                                choiceNames = c("log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
+                                                                                                "Liberté de faire des choix", "Générosité", "Perception de corruption"), selected = colnames(donnees)[4]),
                                                              checkboxGroupInput(inputId = "choix_zone_reg_mul", label = "Zones géographiques : ", choices = sort(unique(donnees$Region)), selected = unique(donnees$Region))
                                                            )),
-                                                      column(
-                                                        width = 9, 
-                                                        textOutput("reg_mult")
-                                                            )
+                                                    column(
+                                                      width = 9, 
+                                                      textOutput("reg_mult")
                                                     )
-                                        )
+                                           )
+                                  )
                       ) 
              ),
              
              # Sixième onglet : Comparaison des pays et comparaison des années
              tabPanel("Evolutions",
-                      navlistPanel("Sélection des variables :")
-             ),
+                      tabsetPanel(fluidRow(column(width = 2, 
+                                                  wellPanel(# filtre sur les lignes - choix de l'année
+                                                    radioButtons(inputId = "choix_colonne_ST", label = "Variables : ", choiceValues = colnames(donnees)[3:9],
+                                                                 choiceNames = c("Indice du bonheur", "log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
+                                                                                 "Liberté de faire des choix", "Générosité", "Perception de corruption"))
+                                                    )
+                                                  ),
+                                           column(width = 10,
+                                                  plotOutput("ST")
+                                                  )
+                                           )
+                                  )
+                      ),
+             
              
              # Septieme onglet : Comparaison des pays et comparaison des années
              tabPanel("Comparaisons 2 pays",

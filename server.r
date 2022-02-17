@@ -36,6 +36,23 @@ shinyServer(function(input, output, session) {
   donnees_annees$Region <- tmp$Region
   donnees <- rbind(donnees_2021, donnees_annees)
   
+  donnees$Region[donnees$Pays == "Angola"] <- "Sub-Saharan Africa"                
+  donnees$Region[donnees$Pays == "Belize"] <- "Latin America and Caribbean"
+  donnees$Region[donnees$Pays == "Bhutan"] <- "South Asia"
+  donnees$Region[donnees$Pays == "Central African Republic"] <- "Sub-Saharan Africa"                
+  donnees$Region[donnees$Pays == "Congo (Kinshasa)"] <- "Sub-Saharan Africa" 
+  donnees$Region[donnees$Pays == "Cuba"] <- "Latin America and Caribbean"
+  donnees$Region[donnees$Pays == "Djibouti"] <- "Sub-Saharan Africa"                
+  donnees$Region[donnees$Pays == "Guyana"] <- "Latin America and Caribbean"
+  donnees$Region[donnees$Pays == "Oman"] <- "Middle East and North Africa"
+  donnees$Region[donnees$Pays == "Qatar"] <- "Middle East and North Africa"                
+  donnees$Region[donnees$Pays == "Somalia"] <- "Middle East and North Africa" # ou Afrique
+  donnees$Region[donnees$Pays == "Somaliland region"] <- "Middle East and North Africa" # ou Afrique
+  donnees$Region[donnees$Pays == "South Sudan"] <- "Sub-Saharan Africa"                
+  donnees$Region[donnees$Pays == "Sudan"] <- "Sub-Saharan Africa"
+  donnees$Region[donnees$Pays == "Suriname"] <- "Latin America and Caribbean"
+  donnees$Region[donnees$Pays == "Syria"] <- "Middle East and North Africa"                
+  donnees$Region[donnees$Pays == "Trinidad and Tobago"] <- "Latin America and Caribbean"
   
   # Données carte
   # On télécharge le nom des pays associé à leur code ISO (3 lettres)
@@ -118,6 +135,8 @@ shinyServer(function(input, output, session) {
         scope = "world",
         showland = TRUE,
         landcolor = toRGB("gray85"),
+        showocean = TRUE,
+        oceancolor = "#a5c7ff",
         showframe = FALSE,
         showcoastlines = FALSE, 
         projection = list(type = 'Mercator')
@@ -127,9 +146,9 @@ shinyServer(function(input, output, session) {
         z = ~Var_num, color = ~Var_num, colors = 'YlOrRd',
         text = ~COUNTRY, locations = ~CODE, marker = list(line = l)
       )
-      fig <- fig %>% colorbar(title = input$choix_colonne_carte, tickprefix = '')
+      fig <- fig %>% colorbar(title = gsub("_", " ", input$choix_colonne_carte), tickprefix = '')
       fig <- fig %>% layout(
-        title = paste(input$choix_colonne_carte, 'en', input$choix_annees),
+        title = paste(gsub("_", " ", input$choix_colonne_carte), 'en', input$choix_annees),
         geo = g
       )
       fig
@@ -143,7 +162,7 @@ shinyServer(function(input, output, session) {
   output$correlogramme <- renderPlot({
     input$zone
     donnees <- donnees %>%
-      filter(Annees == input$choix_annee_cor & Region == input$choix_zone_cor) %>%
+      filter(Annees == input$choix_annee_cor & Region %in% input$choix_zone_cor) %>%
       drop_na()
     matrixcorr<- cbind(donnees$Indice_du_bonheur, donnees$log_PIB_par_hab, donnees$Soutien_social, donnees$Esperance_de_vie_en_bonne_sante,
                        donnees$Liberte_de_faire_des_choix,donnees$Generosite, donnees$Perception_de_corruption)
@@ -158,19 +177,24 @@ shinyServer(function(input, output, session) {
   # })
   
   # Regression simple
-  output$reg_2var_graph <- renderPlot({
-    donnees <- donnees[donnees$Annees == input$choix_annee_reg_2var & donnees$Region == input$choix_zone_reg_2var,c(input$choix_colonne_reg_2var,"Indice_du_bonheur")]  
+  output$reg_2var_graph <- renderPlotly({
+    donnees <- donnees[donnees$Annees == input$choix_annee_reg_2var & donnees$Region %in% input$choix_zone_reg_2var,c(input$choix_colonne_reg_2var,"Indice_du_bonheur","Pays","Region")]  
     donnees <- donnees %>% drop_na()
-   # plot(Indice_du_bonheur~., data=donnees)
-    scatterplot(Indice_du_bonheur~., data=donnees)
-    # ggplot(data = donnees) +
-    #   aes(x = input$choix_colonne_reg_2var, y = Indice_du_bonheur) +
-    #   geom_point() +
-    #   geom_smooth(method=lm)
+    pl <- ggplot(data = donnees) +
+      aes(x = donnees[,1], y = Indice_du_bonheur) +
+      geom_point(aes(text = donnees$Pays)) +
+      geom_smooth(method=lm) +
+      xlab(paste(gsub("_", " ", input$choix_colonne_reg_2var), 'en', input$choix_annee_reg_2var)) +
+      ylab("Indice du bonheur") +
+      ggtitle(paste("Indice du bonheur en fonction de",gsub("_", " ", input$choix_colonne_reg_2var), 'en', input$choix_annee_reg_2var)) +
+      theme(plot.title = element_text(hjust = 0.5))
+    
+    ggplotly(pl, source = donnees$Pays)%>%
+      highlight("plotly_selected")
   })
   
   output$reg_2var_summary <- renderPrint({
-    donnees <- donnees[donnees$Annees == input$choix_annee_reg_2var & donnees$Region == input$choix_zone_reg_2var,c(input$choix_colonne_reg_2var,"Indice_du_bonheur")] 
+    donnees <- donnees[donnees$Annees == input$choix_annee_reg_2var & donnees$Region %in% input$choix_zone_reg_2var,c(input$choix_colonne_reg_2var,"Indice_du_bonheur")] 
     donnees <- donnees %>% drop_na()
     reg_2var <- lm(Indice_du_bonheur~., data = donnees)
     summary(reg_2var)
@@ -179,7 +203,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$eval_residus_reg_2var <- renderPlot({
-    donnees <- donnees[donnees$Annees == input$choix_annee_reg_2var & donnees$Region == input$choix_zone_reg_2var,c(input$choix_colonne_reg_2var,"Indice_du_bonheur")] 
+    donnees <- donnees[donnees$Annees == input$choix_annee_reg_2var & donnees$Region %in% input$choix_zone_reg_2var,c(input$choix_colonne_reg_2var,"Indice_du_bonheur")] 
     donnees <- donnees %>% drop_na()
     reg_2var <- lm(Indice_du_bonheur~., data = donnees)
     acf(residuals(reg_2var), main="Evaluation de l'hypothèse d'indépendance des résidus") 
@@ -187,7 +211,7 @@ shinyServer(function(input, output, session) {
   
   # Regression multiple
   output$reg_mult <- renderPrint({
-    donnees <- donnees[donnees$Annees == input$choix_annee_reg_mul & donnees$Region == input$choix_zone_reg_mul,c(input$choix_colonnes_reg_mul,"Indice_du_bonheur")] 
+    donnees <- donnees[donnees$Annees == input$choix_annee_reg_mul & donnees$Region %in% input$choix_zone_reg_mul,c(input$choix_colonnes_reg_mul,"Indice_du_bonheur")] 
     donnees <- donnees %>% drop_na()
     
     reg_mul <- lm(Indice_du_bonheur~., data=donnees)
@@ -195,4 +219,31 @@ shinyServer(function(input, output, session) {
     
     stargazer(reg_mul, type="text", title="Régression simple")
   })
+  
+  
+  # Onglet Comparaison
+  
+  output$ST <- renderPlot({
+    
+    # Calculons la moyenne d'une variable numérique par région
+    moy_region <- aggregate(donnees[,input$choix_colonne_ST], list(donnees$Region,donnees$Annees), mean, na.action = na.omit)
+    colnames(moy_region) <- c("Region", "Annees", "Moyenne")
+    
+    # On représente l'évolution de cette variable par année en comparant les continents
+    p <- ggplot(
+      moy_region,
+      aes(Annees, Moyenne, group = Region, color = factor(Region))
+    ) +
+      geom_line() +
+      ggtitle(paste("Comparaison de l'évolution de", gsub("_", " ", input$choix_colonne_ST), "entre les régions")) +
+      labs(x = "Année", y = paste("Moyenne", gsub("_", " ", input$choix_colonne_ST))) +
+      theme_bw() +
+      theme(plot.title = element_text(size=15, face="bold", hjust = 0.5),
+            legend.position = "bottom",
+            legend.title=element_blank()) 
+    
+    p 
+    
+  })
+  
 })
