@@ -193,7 +193,7 @@ shinyServer(function(input, output, session) {
       highlight("plotly_selected")
   })
   
-  output$reg_2var_summary <- renderPrint({
+  output$reg_2var_summary <- renderText({
     donnees <- donnees[donnees$Annees == input$choix_annee_reg_2var & donnees$Region %in% input$choix_zone_reg_2var,c(input$choix_colonne_reg_2var,"Indice_du_bonheur")] 
     donnees <- donnees %>% drop_na()
     reg_2var <- lm(Indice_du_bonheur~., data = donnees)
@@ -210,14 +210,14 @@ shinyServer(function(input, output, session) {
   })
   
   # Regression multiple
-  output$reg_mult <- renderPrint({
+  output$reg_mult <- renderTable({
     donnees <- donnees[donnees$Annees == input$choix_annee_reg_mul & donnees$Region %in% input$choix_zone_reg_mul,c(input$choix_colonnes_reg_mul,"Indice_du_bonheur")] 
     donnees <- donnees %>% drop_na()
     
     reg_mul <- lm(Indice_du_bonheur~., data=donnees)
     summary(reg_mul)
     
-    stargazer(reg_mul, type="text", title="Régression simple")
+    stargazer(reg_mul, type="text", title="Régression multiple")
   })
   
   

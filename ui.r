@@ -272,7 +272,8 @@ shinyUI(
                                            
                                            column(width = 9,
                                                   plotlyOutput("reg_2var_graph"),
-                                                  div(textOutput("reg_2var_summary"), align = "center")),
+                                                  div(verbatimTextOutput("reg_2var_summary")),
+                                                      tags$head(tags$style("#reg_2var_summary{font-size:12px;height: 100px;}"))),
                                            column(
                                              width = 9,
                                              plotOutput("eval_residus_reg_2var"),
@@ -294,8 +295,8 @@ shinyUI(
                                                              checkboxGroupInput(inputId = "choix_zone_reg_mul", label = "Zones géographiques : ", choices = sort(unique(donnees$Region)), selected = unique(donnees$Region))
                                                            )),
                                                     column(
-                                                      width = 9, 
-                                                      textOutput("reg_mult")
+                                                      width = 9, heigth = 10,
+                                                      tableOutput("reg_mult")
                                                     )
                                            )
                                   )
