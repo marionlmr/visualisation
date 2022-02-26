@@ -10,11 +10,16 @@ library(corrplot)
 library(stargazer)
 library(plotly)
 library(FactoMineR)
+library(shinythemes)
+library(lmtest)
 
 doc <- tags$html(
   tags$head(
     tags$title('Bonheur')
   ),
+  
+  br(),
+  br(),
   
   tags$body(
     h1('Indice du bonheur dans le monde', style = "text-align: center; background-color: #C70039; color: white;"),
@@ -42,7 +47,7 @@ note comprise entre 0 et 10 sur cette même échelle. Le rapport établit alors 
 résultats de l’évaluation de la vie et divers indicateurs statistiques relatifs au bonheur pour un pays 
 donné.", style = "text-align: justify;"),
     
-    img(src = "https://th.bing.com/th/id/R.b3946abe13f8d66924f6b4623020bdc0?rik=0fK1gfU3YKPiog&pid=ImgRaw&r=0", width = "300px"),
+    img(src = "https://th.bing.com/th/id/R.b3946abe13f8d66924f6b4623020bdc0?rik=0fK1gfU3YKPiog&pid=ImgRaw&r=0", width = "300px",style="display: block; margin-left: auto; margin-right: auto;"),
     
     br(),
     br(),
@@ -89,12 +94,14 @@ Gallup a interrogé un échantillon d’individus pour savoir lesquels des trois
 suivants ils avaient entrepris au cours du mois précédent : aider un étranger, ou quelqu'un qu'ils ne 
 connaissaient pas et qui avait besoin d’aide ; fait un don d'argent à un organisme de bienfaisance ; 
 donner de leur temps à une organisation. ", style = "text-align: justify;")),
+  br(),
+  br(),
   
   tags$footer(
-    p(em("Application réalisée par 3 étudiantes de Master 1 Mathématiques Appliquées, Statistique"), style = "text-align: center;"),
+    p(em("Application réalisée par 3 étudiantes de Master 1 Mathématiques Appliquées, Statistique - Science des données, IA"), style = "text-align: center;"),
     
-    img(src = "https://static.univ-rennes2.fr/img/logo.svg", width = "100px", height = "100px"),
-    
+    img(src = "https://static.univ-rennes2.fr/img/logo.svg", width = "100px", height = "100px",style="display: block; margin-left: auto; margin-right: auto;"),
+    br(),
     p("Lou-Anne Guillotel, Marion Lemer & Floriane Mézirard", style="text-align:center; font-family: times"),
     
     p(em("Date de création - Mars 2022"), style = "text-align: center;"),
@@ -154,9 +161,9 @@ df <- df[,-2]
 
 
 # Define UI for application that draws a histogram
-shinyUI(
+shinyUI( 
   # navbarPage
-  navbarPage("Evolution du bonheur dans le monde",
+  navbarPage(theme = shinytheme("slate"),"Evolution du bonheur dans le monde",
              
              # Premier onglet : Présentation
              tabPanel("Présentation",
@@ -193,7 +200,7 @@ shinyUI(
                                                                                                choiceNames = c("Indice du bonheur", "log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
                                                                                                                "Liberté de faire des choix", "Générosité", "Perception de corruption")),
                                                                                   # filtre sur les lignes - choix de l'année
-                                                                                  selectInput(inputId = "choix_annee_hist", label = "Années : ", choices = sort(unique(donnees$Annees)), selected = 2021),
+                                                                                  selectInput(inputId = "choix_annee_hist", label = "Années : ", choices = sort(unique(donnees$Annees),decreasing = TRUE), selected = 2021),
                                                                                   actionButton("go_graph", "Update !")
                                  )
                                  ),
@@ -210,7 +217,7 @@ shinyUI(
                         tabPanel("ACP",
                                  tabsetPanel(fluidRow(column(width = 2, 
                                                              wellPanel(# filtre sur les lignes - choix de l'année
-                                                               selectInput(inputId = "choix_annee_ACP", label = "Années : ", choices = sort(unique(donnees$Annees)), selected = 2021)
+                                                               selectInput(inputId = "choix_annee_ACP", label = "Années : ", choices = sort(unique(donnees$Annees),decreasing = TRUE), selected = 2021)
                                                              )
                                  ),
                                  column(width = 5,
@@ -232,7 +239,7 @@ shinyUI(
                         radioButtons(inputId = "choix_colonne_carte", label = "Variables : ", choiceValues = colnames(donnees)[3:9],
                                      choiceNames = c("Indice du bonheur", "log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
                                                      "Liberté de faire des choix", "Générosité", "Perception de corruption")),
-                        selectInput(inputId = "choix_annees", label = "Années : ", choices = sort(unique(donnees$Annees)), selected = 2021),
+                        selectInput(inputId = "choix_annees", label = "Années : ", choices = sort(unique(donnees$Annees),decreasing = TRUE), selected = 2021),
                         actionButton("go_graph_carte", "Update !")
                       )),
                       column(width = 9,
@@ -249,7 +256,7 @@ shinyUI(
                                            fluidRow(column(width = 3,
                                                            wellPanel(
                                                              # filtre sur les lignes - choix de l'année
-                                                             selectInput(inputId = "choix_annee_cor", label = "Années : ", choices = 2006:2021, selected = 2021),
+                                                             selectInput(inputId = "choix_annee_cor", label = "Années : ", choices = 2021:2006, selected = 2021),
                                                              # filtre sur les régions - choix des zones géographiques
                                                              actionButton(inputId = "zone", label = "Ajout zones géographiques"),
                                                              checkboxGroupInput(inputId = "choix_zone_cor", label = "Zones géographiques : ", choices = sort(unique(donnees$Region)), selected = unique(donnees$Region))
@@ -261,7 +268,7 @@ shinyUI(
                                            fluidRow(column(width = 3,
                                                            wellPanel(
                                                              # filtre sur les lignes - choix de l'année
-                                                             selectInput(inputId = "choix_annee_reg_2var", label = "Années : ", choices = 2006:2021, selected = 2021),
+                                                             selectInput(inputId = "choix_annee_reg_2var", label = "Années : ", choices = 2021:2006, selected = 2021),
                                                              # sélection colonne 
                                                              radioButtons(inputId = "choix_colonne_reg_2var", label = "Variable explicative : ", choiceValues = colnames(donnees)[4:9],
                                                                           choiceNames = c("log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
@@ -270,10 +277,10 @@ shinyUI(
                                                            )
                                            ),
                                            
-                                           column(width = 9,
-                                                  plotlyOutput("reg_2var_graph"),
-                                                  div(verbatimTextOutput("reg_2var_summary")),
-                                                      tags$head(tags$style("#reg_2var_summary{font-size:12px;height: 100px;}"))),
+                                           column(width = 6,
+                                                  plotlyOutput("reg_2var_graph")),
+                                           column(width = 3,
+                                                  verbatimTextOutput("reg_2var_summary")),
                                            column(
                                              width = 9,
                                              plotOutput("eval_residus_reg_2var"),
@@ -287,7 +294,7 @@ shinyUI(
                                            fluidRow(column(width = 3,
                                                            wellPanel(
                                                              # filtre sur les lignes - choix de l'année
-                                                             selectInput(inputId = "choix_annee_reg_mul", label = "Années : ", choices = 2006:2021, selected = 2021),
+                                                             selectInput(inputId = "choix_annee_reg_mul", label = "Années : ", choices = 2021:2006, selected = 2021),
                                                              # sélection colonne 
                                                              checkboxGroupInput(inputId = "choix_colonnes_reg_mul", label = "Variables explicatives : ", choiceValues = colnames(donnees)[4:9],
                                                                                 choiceNames = c("log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
@@ -295,9 +302,15 @@ shinyUI(
                                                              checkboxGroupInput(inputId = "choix_zone_reg_mul", label = "Zones géographiques : ", choices = sort(unique(donnees$Region)), selected = unique(donnees$Region))
                                                            )),
                                                     column(
-                                                      width = 9, heigth = 10,
-                                                      tableOutput("reg_mult")
-                                                    )
+                                                      width = 4,
+                                                      verbatimTextOutput("reg_mult")),
+                                                    column(width = 4,
+                                                           textOutput("Ramsey"),
+                                                           verbatimTextOutput("reg_mult_ramsey")),
+                                                    column(width = 5,
+                                                           plotOutput("residus_mult")),
+                                                    column(width = 4,
+                                                           plotOutput("resume_mult"))
                                            )
                                   )
                       ) 
@@ -322,7 +335,20 @@ shinyUI(
              
              # Septieme onglet : Comparaison des pays et comparaison des années
              tabPanel("Comparaisons 2 pays",
-                      navlistPanel("Sélection des variables : années, pays")
+                      tabsetPanel(fluidRow(column(width = 2, 
+                                                  wellPanel(# filtre sur les lignes - choix de l'année
+                                                    radioButtons(inputId = "choix_colonne_comparaison", label = "Variables : ", choiceValues = colnames(donnees)[3:9],
+                                                                 choiceNames = c("Indice du bonheur", "log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
+                                                                                 "Liberté de faire des choix", "Générosité", "Perception de corruption")),
+                                                    selectInput(inputId = "choix_pays1", label = "Pays n°1 : ", choices = sort(unique(donnees$Pays)), selected = "France"),
+                                                    selectInput(inputId = "choix_pays2", label = "Pays n°2 : ", choices = sort(unique(donnees$Pays)), selected = "Finland")
+                                                  )
+                      ),
+                      column(width = 10,
+                             plotlyOutput("Comparaison")
+                      )
+                      )
+                      )
              )
   )
 )

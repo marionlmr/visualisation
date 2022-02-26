@@ -12,6 +12,7 @@ library(plotly)
 library(hrbrthemes)
 library(car)
 library(FactoMineR)
+library(lmtest)
 
 shinyServer(function(input, output, session) {
   
@@ -193,7 +194,7 @@ shinyServer(function(input, output, session) {
       highlight("plotly_selected")
   })
   
-  output$reg_2var_summary <- renderText({
+  output$reg_2var_summary <- renderPrint({
     donnees <- donnees[donnees$Annees == input$choix_annee_reg_2var & donnees$Region %in% input$choix_zone_reg_2var,c(input$choix_colonne_reg_2var,"Indice_du_bonheur")] 
     donnees <- donnees %>% drop_na()
     reg_2var <- lm(Indice_du_bonheur~., data = donnees)
@@ -210,7 +211,7 @@ shinyServer(function(input, output, session) {
   })
   
   # Regression multiple
-  output$reg_mult <- renderTable({
+  output$reg_mult <- renderPrint({
     donnees <- donnees[donnees$Annees == input$choix_annee_reg_mul & donnees$Region %in% input$choix_zone_reg_mul,c(input$choix_colonnes_reg_mul,"Indice_du_bonheur")] 
     donnees <- donnees %>% drop_na()
     
@@ -220,8 +221,51 @@ shinyServer(function(input, output, session) {
     stargazer(reg_mul, type="text", title="Régression multiple")
   })
   
+  output$Ramsey <- renderText({
+    "Test de Ramsey - vérifier que le modèle est bien spécifié : \n
+    H0:  le modèle est bien spécifié vs H1: le modèle est mal spécifié \n
+    Si pvalue < 5%, H0
+    sinon H1
+    "
+  })
   
-  # Onglet Comparaison
+  output$reg_mult_ramsey <- renderPrint({
+    donnees <- donnees[donnees$Annees == input$choix_annee_reg_mul & donnees$Region %in% input$choix_zone_reg_mul,c(input$choix_colonnes_reg_mul,"Indice_du_bonheur")] 
+    donnees <- donnees %>% drop_na()
+    
+    reg_mul <- lm(Indice_du_bonheur~., data=donnees)
+    resettest(reg_mul)
+  })
+  
+  output$residus_mult <- renderPlot({
+    donnees <- donnees[donnees$Annees == input$choix_annee_reg_mul & donnees$Region %in% input$choix_zone_reg_mul,c(input$choix_colonnes_reg_mul,"Indice_du_bonheur")] 
+    donnees <- donnees %>% drop_na()
+    
+    reg_mul <- lm(Indice_du_bonheur~., data=donnees)
+    resid = residuals(reg_mul)
+    resid2 = resid^2
+    Fitted = fitted(reg_mul)
+    
+    plot(resid2~Fitted, data=donnees, main="Analyse de l' hétéroscédasticité éventuelle, selon les résidus associés \n aux prévisions de l'indice du Bonheur" ,xlab="Prévisions indice du Bonheur", ylab="Résidus carrés")
+  })
+  
+  output$resume_mult <- renderPlot({
+    donnees <- donnees[donnees$Annees == input$choix_annee_reg_mul & donnees$Region %in% input$choix_zone_reg_mul,c(input$choix_colonnes_reg_mul,"Indice_du_bonheur")] 
+    donnees <- donnees %>% drop_na()
+    
+    reg_mul <- lm(Indice_du_bonheur~., data=donnees)
+    
+    res = rstandard(reg_mul)
+    
+    qqnorm(res, 
+            ylab="Standardized Residuals", 
+            xlab="Normal Scores", 
+            main="Normal Q-Q") 
+    qqline(res)
+  })
+  
+  
+  # Onglet Evolution
   
   output$ST <- renderPlot({
     
@@ -245,5 +289,26 @@ shinyServer(function(input, output, session) {
     p 
     
   })
+  
+  # Onglet Comparaison
+  
+  output$Comparaison <- renderPlotly({
+    
+    donnees_pays = donnees[donnees$Pays %in% c(input$choix_pays1, input$choix_pays2),c(input$choix_colonne_comparaison,"Pays","Annees")]
+
+    p <- ggplot(donnees_pays)+
+      aes(x = Annees, y = donnees_pays[,1], col = Pays) +
+      geom_line() +
+      geom_point() +
+      xlab("Années") +
+      ylab(paste(gsub("_", " ", input$choix_colonne_comparaison))) +
+      ggtitle(paste("Evolution de",gsub("_", " ", input$choix_colonne_comparaison), 'entre', input$choix_pays1, 'et', input$choix_pays2)) +
+      theme(plot.title = element_text(hjust = 0.5))
+    
+    ggplotly(p, source = donnees_pays$Pays)%>%
+      highlight("plotly_selected")
+    
+  })
+  
   
 })
