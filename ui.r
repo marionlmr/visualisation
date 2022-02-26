@@ -18,11 +18,11 @@ doc <- tags$html(
     tags$title('Bonheur')
   ),
   
-  br(),
-  br(),
-  
   tags$body(
     h1('Indice du bonheur dans le monde', style = "text-align: center; background-color: #C70039; color: white;"),
+    
+    br(),
+    br(),
     
     p("Notre base de données est issue du site “kaggle”. Elle se nomme ", strong("“Le bonheur dans le monde”."), 
       " Elle comporte 149 pays pour lesquels nous disposons de leur zone géographique, ainsi que des 
