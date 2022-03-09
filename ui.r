@@ -13,6 +13,7 @@ library(FactoMineR)
 library(shinythemes)
 library(lmtest)
 
+# Creation de texte, sous forme html pour la premiere page de l'application
 doc <- tags$html(
   tags$head(
     tags$title('Bonheur')
@@ -55,30 +56,30 @@ donné.", style = "text-align: justify;"),
     p("Nous allons désormais présenter les six indicateurs qui constituent les variables explicatives de notre 
 analyse économétrique. ", style = "text-align: justify;"),
     
-    p("    ● Le ", strong("PIB par habitant"), " est exprimé en dollars à parité du pouvoir d’achat. Dans notre base de 
+    p("● Le ", strong("PIB par habitant"), " est exprimé en dollars à parité du pouvoir d’achat. Dans notre base de 
 données, cette variable est déjà exprimée en logarithme. Cette transformation est très utile : la pente 
 de la série transformée correspond ainsi au taux de croissance, et de plus cela nous libère des unités 
 de mesure et introduit des unités de pourcentage qui sont relatives.", style = "text-align: justify;"),
     
-    p("    ● Le ", strong("soutien social"), " est un indice créé dans le but de montrer le développement humain d’un 
+    p("● Le ", strong("soutien social"), " est un indice créé dans le but de montrer le développement humain d’un 
 pays. Cet indice est basé sur trois axes principaux incluant 52 indicateurs : les besoins humains 
 fondamentaux (alimentation, santé, logement, …), les fondements du bien-être (alphabétisation, 
 éducation, obésité, pollution, …) et les opportunités (droits politiques, de propriété, la corruption, ...).
       Dans notre base de données, il est compris entre 0 (absence d’aide sociale) et 1 (aide sociale absolue),
 mais il est possible de l’exprimer en pourcentage", style = "text-align: justify;"),
     
-    p("    ● Selon l’INSEE, ", strong("l'espérance de vie en bonne santé"), " est la durée de vie moyenne en bonne 
+    p("● Selon l’INSEE, ", strong("l'espérance de vie en bonne santé"), " est la durée de vie moyenne en bonne 
 santé - c'est-à-dire sans limitation irréversible d'activité dans la vie quotidienne ni incapacités - d'une 
 génération fictive soumise aux conditions de mortalité et de morbidité de l'année. Elle caractérise la 
 mortalité et la morbidité indépendamment de la structure par âge.", style = "text-align: justify;"),
     
-    p("    ● La ", strong("liberté de faire des choix"), " est un indice qui permet de décrire la possibilité et l’autonomie 
+    p("● La ", strong("liberté de faire des choix"), " est un indice qui permet de décrire la possibilité et l’autonomie 
 d’une personne d’effectuer une action choisie parmi au moins deux options disponibles, sans 
 contraintes par des parties externes. L’indicateur de liberté (de 0 : absence totale de liberté à 1 :
 jouissance totale de liberté) proposé par Freedom House caractérise globalement le respect des droits 
 et des libertés.", style = "text-align: justify;"),
     
-    p("    ● La ", strong("perception de corruption"), " correspond au pourcentage de la population déclarant que le 
+    p("● La ", strong("perception de corruption"), " correspond au pourcentage de la population déclarant que le 
 secteur des affaires et le gouvernement sont corrompus (dans notre base de données, il s’agit d’un 
 indice compris entre 0 et 1 : plus il y a proche de 0, moins la population pense que la corruption est 
 répandue dans son pays, et inversement). Les résultats sont basés sur des entretiens en face à face et 
@@ -87,7 +88,7 @@ questions sur la corruption sont si délicates dans certains pays que même si G
 poser, les résultats peuvent refléter la réticence des résidents à critiquer leur gouvernement. Cela est 
 particulièrement vrai dans les pays où la liberté des médias est restreinte.", style = "text-align: justify;"),
     
-    p("    ● La variable ", strong("générosité (World Giving Index)"), " est un indice permettant de donner un aperçu 
+    p("● La variable ", strong("générosité (World Giving Index)"), " est un indice permettant de donner un aperçu 
 de la portée et de la nature du don dans le monde. Dans la plupart des pays étudiés, 1 000 
 questionnaires sont remplis par un échantillon représentatif d'individus vivant dans tout le pays. 
 Gallup a interrogé un échantillon d’individus pour savoir lesquels des trois actes de bienfaisance 
@@ -109,7 +110,6 @@ donner de leur temps à une organisation. ", style = "text-align: justify;")),
     style = "background-color: #C70039; color: white;"
   )
 )
-
 
 
 
@@ -163,7 +163,8 @@ df <- df[,-2]
 # Define UI for application that draws a histogram
 shinyUI( 
   # navbarPage
-  navbarPage(theme = shinytheme("slate"),"Evolution du bonheur dans le monde",
+  navbarPage(theme = shinytheme("slate"),
+             "Evolution du bonheur dans le monde",
              
              # Premier onglet : Présentation
              tabPanel("Présentation",
@@ -176,7 +177,7 @@ shinyUI(
                                    tabPanel("Tableau", h1("Données", style = "color: #C70039; text-align: center"),DTOutput("table")),
                                    tabPanel("Résumé", verbatimTextOutput("summary")))
                       
-             ), 
+                    ), 
              
              
              # Troisième onglet : Visualisation
@@ -202,38 +203,40 @@ shinyUI(
                                                                                   # filtre sur les lignes - choix de l'année
                                                                                   selectInput(inputId = "choix_annee_hist", label = "Années : ", choices = sort(unique(donnees$Annees),decreasing = TRUE), selected = 2021),
                                                                                   actionButton("go_graph", "Update !")
-                                 )
-                                 ),
-                                 column(width = 9, 
-                                        tabsetPanel(id="viz",
-                                                    tabPanel("Histogramme", plotlyOutput("distPlot"), 
-                                                             div(textOutput("n_bins"), align = "center")),
-                                                    tabPanel("Boxplot",plotlyOutput("distPlot1"))
-                                        )
-                                 )
-                                 )
-                                 )
-                        ),
+                                                                                  )
+                                                          ),
+                                                    column(width = 9, 
+                                                          tabsetPanel(id="viz",
+                                                                      tabPanel("Histogramme", plotlyOutput("distPlot"),
+                                                                      br(),
+                                                                      div(textOutput("n_bins"), align = "center")),
+                                                                      tabPanel("Boxplot",plotlyOutput("distPlot1"))
+                                                                      )
+                                                          )
+                                                    )
+                                          )
+                                ),
                         tabPanel("ACP",
                                  tabsetPanel(fluidRow(column(width = 2, 
                                                              wellPanel(# filtre sur les lignes - choix de l'année
                                                                selectInput(inputId = "choix_annee_ACP", label = "Années : ", choices = sort(unique(donnees$Annees),decreasing = TRUE), selected = 2021)
-                                                             )
-                                 ),
-                                 column(width = 5,
-                                        plotOutput("acpind")
-                                 ),
-                                 column(width = 5,
-                                        plotOutput("acpvar"),
-                                        p("Voici le constat général : Le soutien social, l'espérance de vie en bonne
-                                          santé, le log du PIB par habitant et l'indice du bonheur sont fortement corrélés positivement."),
-                                        p("La liberté de faire des choix et la perception de corruption sont fortement corrélées négativement."),
-                                        p("L'indice du bonheur et la générosité ne sont pas corrélés."),
-                                        p("Remarque : On retrouvera le même constat dans l'onglet Modèles.")
-                                 )
-                                 )
-                                 )
-                        )
+                                                                      )
+                                                              ),
+                                                      column(width = 5,
+                                                            plotOutput("acpind")
+                                                              ),
+                                                      column(width = 5,
+                                                            plotOutput("acpvar"),
+                                                            br(),
+                                                            p("Voici le constat général : Le soutien social, l'espérance de vie en bonne
+                                                              santé, le log du PIB par habitant et l'indice du bonheur sont fortement corrélés positivement."),
+                                                            p("La liberté de faire des choix et la perception de corruption sont fortement corrélées négativement."),
+                                                            p("L'indice du bonheur et la générosité ne sont pas corrélés."),
+                                                            p("Remarque : On retrouvera le même constat dans l'onglet Modèles.")
+                                                            )
+                                                    )
+                                            )
+                                )
                       )
              ),
              
@@ -257,9 +260,9 @@ shinyUI(
                                                            ),
                                                     column(width = 10,
                                                            plotlyOutput("comp_regions")
+                                                          )
                                                     )
-                                           )
-                                  ),
+                                          ),
                                   
                                   tabPanel("Comparaisons entre pays", 
                                            fluidRow(column(width = 2, 
@@ -269,14 +272,14 @@ shinyUI(
                                                                                           "Liberté de faire des choix", "Générosité", "Perception de corruption")),
                                                              selectInput(inputId = "choix_pays1", label = "Pays n°1 : ", choices = sort(unique(donnees$Pays)), selected = "France"),
                                                              selectInput(inputId = "choix_pays2", label = "Pays n°2 : ", choices = sort(unique(donnees$Pays)), selected = "Finland")
-                                                           )
-                                           ),
-                                           column(width = 10,
-                                                  plotlyOutput("comp_pays")
-                                           )
-                                           )
-                                  )
-                      )
+                                                                    )
+                                                          ),
+                                                    column(width = 10,
+                                                          plotlyOutput("comp_pays")
+                                                          )
+                                                    )
+                                          )
+                                )
              ),
              
              # Cinquième onglet : Cartographie
@@ -288,12 +291,11 @@ shinyUI(
                         selectInput(inputId = "choix_annees", label = "Années : ", choices = sort(unique(donnees$Annees),decreasing = TRUE), selected = 2021),
                         actionButton("go_graph_carte", "Update !")
                       )),
-                      column(width = 9,
-                             tabsetPanel(id="carto",
-                                         tabPanel("Cartographie", plotlyOutput("map"))
-                             )
-                      )
-                      )),
+                              column(width = 9,
+                                    plotlyOutput("map")
+                                    )
+                              )
+                      ),
              
              # Sizième onglet : Modèle - Régression
              tabPanel("Modèles", 
@@ -304,12 +306,14 @@ shinyUI(
                                                              # filtre sur les lignes - choix de l'année
                                                              selectInput(inputId = "choix_annee_cor", label = "Années : ", choices = 2021:2006, selected = 2021),
                                                              # filtre sur les régions - choix des zones géographiques
-                                                             actionButton(inputId = "zone", label = "Ajout zones géographiques"),
                                                              checkboxGroupInput(inputId = "choix_zone_cor", label = "Zones géographiques : ", choices = sort(unique(donnees$Region)), selected = unique(donnees$Region))
-                                                           )
-                                           ),
+                                                                    )
+                                                          ),
                                            
-                                           column(width = 9,plotOutput("correlogramme")))),
+                                           column(width = 9,
+                                                  plotOutput("correlogramme"))
+                                                  )
+                                           ),
                                   tabPanel("Régression linéaire simple",
                                            fluidRow(column(width = 3,
                                                            wellPanel(
@@ -366,14 +370,14 @@ shinyUI(
                                                              alors on peut penser que l'hypothèse d'homoscédasticité est vérifiée.
                                                              En revanche, si les résidus ont une forme en trompette, il est 
                                                              possible que ces derniers soient hétéroscédastiques.")),
-                                                          
+                                                    column(width = 7),     
                                                     column(width = 4,
                                                            plotOutput("resume_mult"),
                                                            p("Si les résidus semblent se répartir le long de la bissectrice,
                                                              alors cela nous conforte sur l'hypothèse de normalité des bruits."))
-                                           )
-                                  )
-                      ) 
-             )
-  )
+                                                    )
+                                          )
+                              ) 
+                    )
+          )
 )
