@@ -70,8 +70,16 @@ shinyServer(function(input, output, session) {
   
   # table
   output$table <- renderDT({
-    donnees
+
+    datatable(donnees, options = list(
+      initComplete = JS(
+        "function(settings, json) {",
+        "$(this.api().table().header()).css({'background-color': '#000', 'color': '#fff'});",
+        "}")
+    ))
   })
+
+
   
   
   # Onglet Visualisation
@@ -89,22 +97,38 @@ shinyServer(function(input, output, session) {
   })
   
   
-  output$distPlot <- renderAmCharts({
+  output$distPlot <- renderPlotly({
     input$go_graph
     isolate({
-      x <- donnees[donnees$Annees == input$choix_annee_hist, input$choix_colonne] 
-      bins <- seq(min(x, na.rm=TRUE), max(x,na.rm=TRUE),  input$bins + 1)
-      # use amHist
-      amHist(x = x, col = input$color, main = input$titre, export = TRUE, zoom = TRUE) #, control_hist = list(breaks = bins)
-    })
+      df <- data.frame(x=donnees[donnees$Annees == input$choix_annee_hist, input$choix_colonne])
+      
+      pl <- ggplot(data = df) +
+        aes(x = x, y = ..density..) +
+        geom_histogram(bins=input$bins, fill=input$color) +
+        theme(legend.position="none") + 
+        ggtitle(input$titre) +
+        labs(x = paste(gsub("_", " ", input$choix_colonne))) + 
+        theme(plot.title = element_text(size=14, face="bold", hjust=0.5))
+      # +
+      #   geom_vline(aes(xintercept = mean(df[,1])), colour="green", linetype = "longdash")
+      
+      ggplotly(pl)%>%
+        highlight("plotly_selected")
+      })
   })
   
-  output$distPlot1 <- renderPlot({
-    # generate bins based on input$bins from ui.R
-    x    <- donnees[, input$choix_colonne] 
+  output$distPlot1 <- renderPlotly({
+    df <- data.frame(x=donnees[donnees$Annees == input$choix_annee_hist, input$choix_colonne])
     
-    # draw the histogram with the specified number of bins
-    boxplot(x, col = input$color, main = input$titre)
+    pl <- ggplot(data = df) +
+      aes(x = colnames(df), y = x) +
+      geom_boxplot(fill=input$color) +
+      ggtitle(paste("Boxplot", gsub("_", " ", input$choix_colonne))) +
+      theme(plot.title = element_text(size=14, face="bold", hjust=0.5),
+            axis.title.x = element_blank())
+    
+    ggplotly(pl)%>%
+      highlight("plotly_selected")
   })
   
   output$acpvar <- renderPlot({
@@ -221,14 +245,7 @@ shinyServer(function(input, output, session) {
     stargazer(reg_mul, type="text", title="Régression multiple")
   })
   
-  output$Ramsey <- renderText({
-    "Test de Ramsey - vérifier que le modèle est bien spécifié : \n
-    H0:  le modèle est bien spécifié vs H1: le modèle est mal spécifié \n
-    Si pvalue < 5%, H0
-    sinon H1
-    "
-  })
-  
+
   output$reg_mult_ramsey <- renderPrint({
     donnees <- donnees[donnees$Annees == input$choix_annee_reg_mul & donnees$Region %in% input$choix_zone_reg_mul,c(input$choix_colonnes_reg_mul,"Indice_du_bonheur")] 
     donnees <- donnees %>% drop_na()
@@ -258,27 +275,32 @@ shinyServer(function(input, output, session) {
     res = rstandard(reg_mul)
     
     qqnorm(res, 
-            ylab="Standardized Residuals", 
-            xlab="Normal Scores", 
-            main="Normal Q-Q") 
+           ylab="Standardized Residuals", 
+           xlab="Normal Scores", 
+           main="Normal Q-Q") 
     qqline(res)
   })
   
   
-  # Onglet Evolution
+  # Onglet Comparaisons temporelles
   
-  output$ST <- renderPlot({
+  # Entre régions
+  
+  output$comp_regions <- renderPlotly({
     
     # Calculons la moyenne d'une variable numérique par région
     moy_region <- aggregate(donnees[,input$choix_colonne_ST], list(donnees$Region,donnees$Annees), mean, na.action = na.omit)
     colnames(moy_region) <- c("Region", "Annees", "Moyenne")
     
+    une_region <- moy_region[moy_region$Region %in% input$choix_zone_comparaison,]
+      
     # On représente l'évolution de cette variable par année en comparant les continents
     p <- ggplot(
-      moy_region,
+      une_region,
       aes(Annees, Moyenne, group = Region, color = factor(Region))
     ) +
       geom_line() +
+      geom_point() +
       ggtitle(paste("Comparaison de l'évolution de", gsub("_", " ", input$choix_colonne_ST), "entre les régions")) +
       labs(x = "Année", y = paste("Moyenne", gsub("_", " ", input$choix_colonne_ST))) +
       theme_bw() +
@@ -286,24 +308,26 @@ shinyServer(function(input, output, session) {
             legend.position = "bottom",
             legend.title=element_blank()) 
     
-    p 
+    ggplotly(p, source = une_region$Region)%>%
+      highlight("plotly_selected") 
     
   })
   
-  # Onglet Comparaison
+  # Entre pays
   
-  output$Comparaison <- renderPlotly({
+  output$comp_pays <- renderPlotly({
     
     donnees_pays = donnees[donnees$Pays %in% c(input$choix_pays1, input$choix_pays2),c(input$choix_colonne_comparaison,"Pays","Annees")]
-
+    
     p <- ggplot(donnees_pays)+
       aes(x = Annees, y = donnees_pays[,1], col = Pays) +
       geom_line() +
       geom_point() +
-      xlab("Années") +
+      xlab("Année") +
       ylab(paste(gsub("_", " ", input$choix_colonne_comparaison))) +
+      theme_bw() +
       ggtitle(paste("Evolution de",gsub("_", " ", input$choix_colonne_comparaison), 'entre', input$choix_pays1, 'et', input$choix_pays2)) +
-      theme(plot.title = element_text(hjust = 0.5))
+      theme(plot.title = element_text(size=15, face="bold", hjust = 0.5))
     
     ggplotly(p, source = donnees_pays$Pays)%>%
       highlight("plotly_selected")

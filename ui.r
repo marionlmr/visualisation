@@ -206,9 +206,9 @@ shinyUI(
                                  ),
                                  column(width = 9, 
                                         tabsetPanel(id="viz",
-                                                    tabPanel("Histogramme", amChartsOutput("distPlot"), 
+                                                    tabPanel("Histogramme", plotlyOutput("distPlot"), 
                                                              div(textOutput("n_bins"), align = "center")),
-                                                    tabPanel("Boxplot",plotOutput("distPlot1"))
+                                                    tabPanel("Boxplot",plotlyOutput("distPlot1"))
                                         )
                                  )
                                  )
@@ -224,7 +224,12 @@ shinyUI(
                                         plotOutput("acpind")
                                  ),
                                  column(width = 5,
-                                        plotOutput("acpvar")
+                                        plotOutput("acpvar"),
+                                        p("Voici le constat général : Le soutien social, l'espérance de vie en bonne
+                                          santé, le log du PIB par habitant et l'indice du bonheur sont fortement corrélés positivement."),
+                                        p("La liberté de faire des choix et la perception de corruption sont fortement corrélées négativement."),
+                                        p("L'indice du bonheur et la générosité ne sont pas corrélés."),
+                                        p("Remarque : On retrouvera le même constat dans l'onglet Modèles.")
                                  )
                                  )
                                  )
@@ -233,7 +238,48 @@ shinyUI(
              ),
              
              
-             # Quatième onglet : Cartographie
+             # Quatrième onglet : Comparaisons temporelles
+             tabPanel("Comparaisons temporelles", 
+                      tabsetPanel(id="comparaisons",
+                                  tabPanel("Comparaisons entre régions", 
+                                           fluidRow(column(width = 2, 
+                                                           wellPanel(# filtre sur les lignes - choix de l'année
+                                                             radioButtons(inputId = "choix_colonne_ST", label = "Variables : ", choiceValues = colnames(donnees)[3:9],
+                                                                          choiceNames = c("Indice du bonheur", "log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
+                                                                                          "Liberté de faire des choix", "Générosité", "Perception de corruption")),
+                                                                          checkboxGroupInput(inputId = "choix_zone_comparaison", 
+                                                                                             label = "Zones géographiques : ", 
+                                                                                             choices = sort(unique(donnees$Region)), 
+                                                                                             selected = unique(donnees$Region)
+                                                                                             )
+                                                                    ),
+                                                           
+                                                           ),
+                                                    column(width = 10,
+                                                           plotlyOutput("comp_regions")
+                                                    )
+                                           )
+                                  ),
+                                  
+                                  tabPanel("Comparaisons entre pays", 
+                                           fluidRow(column(width = 2, 
+                                                           wellPanel(# filtre sur les lignes - choix de l'année
+                                                             radioButtons(inputId = "choix_colonne_comparaison", label = "Variables : ", choiceValues = colnames(donnees)[3:9],
+                                                                          choiceNames = c("Indice du bonheur", "log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
+                                                                                          "Liberté de faire des choix", "Générosité", "Perception de corruption")),
+                                                             selectInput(inputId = "choix_pays1", label = "Pays n°1 : ", choices = sort(unique(donnees$Pays)), selected = "France"),
+                                                             selectInput(inputId = "choix_pays2", label = "Pays n°2 : ", choices = sort(unique(donnees$Pays)), selected = "Finland")
+                                                           )
+                                           ),
+                                           column(width = 10,
+                                                  plotlyOutput("comp_pays")
+                                           )
+                                           )
+                                  )
+                      )
+             ),
+             
+             # Cinquième onglet : Cartographie
              tabPanel("Cartographie",
                       fluidRow(column(width = 3,wellPanel(# selection de la colonne
                         radioButtons(inputId = "choix_colonne_carte", label = "Variables : ", choiceValues = colnames(donnees)[3:9],
@@ -249,7 +295,7 @@ shinyUI(
                       )
                       )),
              
-             # Cinquième onglet : Modèle - Régression
+             # Sizième onglet : Modèle - Régression
              tabPanel("Modèles", 
                       tabsetPanel(id="modele",
                                   tabPanel("Corrélation", 
@@ -284,7 +330,7 @@ shinyUI(
                                            column(
                                              width = 9,
                                              plotOutput("eval_residus_reg_2var"),
-                                             p("Les pointillées horizontaux, sont les intervalles de confiance du coefficient 
+                                             p("Les pointillées horizontaux sont les intervalles de confiance du coefficient 
                                                de corrélation égal à 0. Les traits verticaux représentent les coefficients de corrélation 
                                                entre les résidus de chaque point et ceux des points de la ligne suivante (lag=1), 
                                                ou ceux séparés de deux lignes (lag=2) etc…",style = "text-align: justify;")
@@ -305,50 +351,29 @@ shinyUI(
                                                       width = 4,
                                                       verbatimTextOutput("reg_mult")),
                                                     column(width = 4,
+                                                           p(strong("Test de Ramsey"),"- L'objectif est de vérifier que le modèle est bien spécifié."),
+                                                           p("H0 : Le modèle est bien spécifié vs H1 : Le modèle est mal spécifié."),
                                                            textOutput("Ramsey"),
-                                                           verbatimTextOutput("reg_mult_ramsey")),
+                                                           verbatimTextOutput("reg_mult_ramsey"),
+                                                           p("Si pvalue < 5%, on rejette H0 (le modèle est mal spécifié).
+                                                            Sinon, on ne rejette pas H0 (on ne dispose pas d'éléments suffisants remettant en cause la bonne spécification du modèle)
+                                                            ." , style = "text-align: justify;"),
+                                                           br()),
+                                                    
                                                     column(width = 5,
-                                                           plotOutput("residus_mult")),
+                                                           plotOutput("residus_mult"),
+                                                           p("Si les résidus semblent se répartir de manière aléatoire, 
+                                                             alors on peut penser que l'hypothèse d'homoscédasticité est vérifiée.
+                                                             En revanche, si les résidus ont une forme en trompette, il est 
+                                                             possible que ces derniers soient hétéroscédastiques.")),
+                                                          
                                                     column(width = 4,
-                                                           plotOutput("resume_mult"))
+                                                           plotOutput("resume_mult"),
+                                                           p("Si les résidus semblent se répartir le long de la bissectrice,
+                                                             alors cela nous conforte sur l'hypothèse de normalité des bruits."))
                                            )
                                   )
                       ) 
-             ),
-             
-             # Sixième onglet : Comparaison des pays et comparaison des années
-             tabPanel("Evolutions",
-                      tabsetPanel(fluidRow(column(width = 2, 
-                                                  wellPanel(# filtre sur les lignes - choix de l'année
-                                                    radioButtons(inputId = "choix_colonne_ST", label = "Variables : ", choiceValues = colnames(donnees)[3:9],
-                                                                 choiceNames = c("Indice du bonheur", "log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
-                                                                                 "Liberté de faire des choix", "Générosité", "Perception de corruption"))
-                                                    )
-                                                  ),
-                                           column(width = 10,
-                                                  plotOutput("ST")
-                                                  )
-                                           )
-                                  )
-                      ),
-             
-             
-             # Septieme onglet : Comparaison des pays et comparaison des années
-             tabPanel("Comparaisons 2 pays",
-                      tabsetPanel(fluidRow(column(width = 2, 
-                                                  wellPanel(# filtre sur les lignes - choix de l'année
-                                                    radioButtons(inputId = "choix_colonne_comparaison", label = "Variables : ", choiceValues = colnames(donnees)[3:9],
-                                                                 choiceNames = c("Indice du bonheur", "log PIB par habitant", "Soutien social", "Espérance de vie en bonne santé",
-                                                                                 "Liberté de faire des choix", "Générosité", "Perception de corruption")),
-                                                    selectInput(inputId = "choix_pays1", label = "Pays n°1 : ", choices = sort(unique(donnees$Pays)), selected = "France"),
-                                                    selectInput(inputId = "choix_pays2", label = "Pays n°2 : ", choices = sort(unique(donnees$Pays)), selected = "Finland")
-                                                  )
-                      ),
-                      column(width = 10,
-                             plotlyOutput("Comparaison")
-                      )
-                      )
-                      )
              )
   )
 )
