@@ -1,0 +1,247 @@
+---
+title: "Application RShiny : Indice du bonheur dans le monde"
+author:
+- name: Lou-Anne Guillotel
+- name: Floriane Mézirard
+- name: Marion Lemer
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE, error = TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r echo=FALSE}
+# Ouverture premiere BDD relative à l'année 2021
+donnees_2021 <- read.csv("world-happiness-report-2021.csv")
+donnees_2021 <- donnees_2021[,c(1:3,7:12)]
+colnames(donnees_2021) <- c("Pays","Region","Indice_du_bonheur","log_PIB_par_hab","Soutien_social","Esperance_de_vie_en_bonne_sante","Liberte_de_faire_des_choix","Generosite","Perception_de_corruption")
+donnees_2021$Annees <- 2021
+
+# Ouverture de la deuxième BDD (années antérieures à 2021)
+donnees_annees <- read.csv("world-happiness-report.csv")
+donnees_annees <- donnees_annees[,1:9]
+colnames(donnees_annees) <- c("Pays","Annees","Indice_du_bonheur","log_PIB_par_hab","Soutien_social","Esperance_de_vie_en_bonne_sante","Liberte_de_faire_des_choix","Generosite","Perception_de_corruption")
+
+# Ajout de la colonne Region à donnees_annees
+tmp <- merge(data.frame(Pays = donnees_2021$Pays, Region = donnees_2021$Region), 
+             data.frame(Pays = donnees_annees$Pays),
+             all.y = TRUE)
+donnees_annees$Region <- tmp$Region
+donnees <- rbind(donnees_2021, donnees_annees)
+
+donnees$Region[donnees$Pays == "Angola"] <- "Sub-Saharan Africa"                
+donnees$Region[donnees$Pays == "Belize"] <- "Latin America and Caribbean"
+donnees$Region[donnees$Pays == "Bhutan"] <- "South Asia"
+donnees$Region[donnees$Pays == "Central African Republic"] <- "Sub-Saharan Africa"                
+donnees$Region[donnees$Pays == "Congo (Kinshasa)"] <- "Sub-Saharan Africa" 
+donnees$Region[donnees$Pays == "Cuba"] <- "Latin America and Caribbean"
+donnees$Region[donnees$Pays == "Djibouti"] <- "Sub-Saharan Africa"                
+donnees$Region[donnees$Pays == "Guyana"] <- "Latin America and Caribbean"
+donnees$Region[donnees$Pays == "Oman"] <- "Middle East and North Africa"
+donnees$Region[donnees$Pays == "Qatar"] <- "Middle East and North Africa"                
+donnees$Region[donnees$Pays == "Somalia"] <- "Middle East and North Africa" # ou Afrique
+donnees$Region[donnees$Pays == "Somaliland region"] <- "Middle East and North Africa" # ou Afrique
+donnees$Region[donnees$Pays == "South Sudan"] <- "Sub-Saharan Africa"                
+donnees$Region[donnees$Pays == "Sudan"] <- "Sub-Saharan Africa"
+donnees$Region[donnees$Pays == "Suriname"] <- "Latin America and Caribbean"
+donnees$Region[donnees$Pays == "Syria"] <- "Middle East and North Africa"                
+donnees$Region[donnees$Pays == "Trinidad and Tobago"] <- "Latin America and Caribbean"
+```
+
+</br>
+
+Le Produit Intérieur Brut (PIB) est un indicateur qui mesure la richesse d’un pays, c’est-à-dire tout ce
+qui est produit dans le pays en une année. Pour calculer ce PIB, une des possibilités est d’additionner
+les valeurs ajoutées de tout ce qui est produit dans le pays.  
+  Cependant, la richesse d’un pays ne se limite pas forcément à sa production, mais pourrait également
+prendre en compte **la qualité de vie** dans ce pays. 
+
+
+Le *World Happiness Report* est une enquête historique sur l’état du bonheur mondial. Rédigé par un
+groupe d’experts indépendants au sein du Sustainable Development Solutions Network mis en place
+par les Nations Unies, ce rapport annuel se fonde largement sur le panel mondial de l’institut Gallup.
+Ce dernier réalise des enquêtes auprès d’échantillons représentatifs dans plus de 160 pays, sur la base
+de questions uniformisées.
+Le World Happiness Report paraît annuellement le 20 mars afin de coïncider avec la Journée internationale du
+bonheur de l'ONU.  
+
+Les données sont issues de Kaggle, de 2005 à 2021.
+En plus de l'indice du bonheur comme variable à expliquer, nous disposons pour chaque pays de leur zone géographique, ainsi que 
+des indicateurs comme l’indice de bonheur, le PIB par habitant (log), le soutien social, l’espérance de vie
+en bonne santé, la liberté de faire des choix, les perceptions de corruption ou la générosité.  
+
+</br>
+
+Nous avons donc essayé d’appréhender les déterminants de l’indice de bonheur en répondant à la problématique suivante :     
+**Comment peut-on expliquer le bonheur dans le monde ?**
+
+L'objectif ici est donc d'utiliser la visualisation pour répondre au problème posé. pertinent Au cours de notre analyse, nous nous sommes concentrées sur l'aspect visualisation.
+Ainsi, nos résultats sont présentés dans l'application RShiny associée à ce document : **Evolution du Bonheur dans le monde**, disponible à l'adresse suivante : https://fmezirard.shinyapps.io/visu_bonheur/.
+
+Notre analyse s'articule autour de deux parties : les statistiques descriptive d'une part, et la modélisation d'autre part pour répondre à notre problématique.
+
+Afin de travailler ensemble efficacement, nous avons utilisé Github, dont voici le lien associé à notre projet : https://github.com/marionlmr/visualisation
+
+</br>
+
+# Description des données : onglets Data, Visualisaton, Comparaisons temporelles et Cartographie
+
+## Onglet Data
+
+Nous avions initialement deux jeux de données distincts : un comportant les données pour l'année 2021 et un comportant les données pour les années allant de 2005 à 2020. La première étape a donc été de fusionner ces deux fichiers. Par ailleurs, la variable Région était absente pour certains pays : nous l'avons donc rajoutée manuellement pour ces pays. 
+Voici un aperçu du data.frame finalement obtenu, que nous utilisons pour notre étude :
+
+```{r echo=FALSE}
+head(donnees)
+```
+
+Ainsi, le premier onglet Data permet à l’utilisateur de parcourir le jeu de données que nous avons utilisé pour notre étude. Par ailleurs, un résumé statistique du jeu de données y est disponible. 
+
+</br>
+
+## Onglet Visualisation
+
+L’onglet Visualisation est consacré à une analyse statistique descriptive graphique. 
+
+</br>
+
+Dans le premier sous-onglet, l’utilisateur a la possibilité d’observer un histogramme ou bien un boxplot de la variable de son choix et pour l’année de son choix. Le titre est modifiable. 
+
+![](visu_histo.png)
+
+</br>
+
+Un second sous-onglet appelé ACP propose une analyse en composantes principales pour une année sélectionnée. Nous proposons de ce fait le graphique des individus et le graphique des variables. Le graphique des variables conduit au constat suivant : de manière générale, le soutien social, l'espérance de vie en bonne santé, le log du PIB par habitant et l'indice du bonheur sont fortement corrélés positivement. La liberté de faire des choix et la perception de corruption sont fortement corrélées négativement. L'indice du bonheur et la générosité ne sont pas corrélés. Notons que nous retrouverons le même constat dans l'onglet Modèles.
+
+</br>
+
+## Onglet Comparaisons temporelles
+
+L’onglet Comparaisons temporelles propose de comparer l’évolution temporelle d’une certaine variable entre régions d’une part (1er sous-onglet) et entre pays d’autre part (2ème sous-onglet). 
+
+</br>
+
+Par défaut, toutes les régions sont représentées. L’utilisateur a toutefois la possibilité de les décocher pour conserver uniquement celles de son choix. La capture qui suit présente les évolutions de l'indice du bonheur pour toutes les régions.
+
+![](evol_temp_regions.png)
+
+</br>
+
+Pour les séries temporelles des pays, cette fois-ci, l’utilisateur doit sélectionner deux pays dont il souhaite comparer les courbes. Ci-dessous nous pouvons voir une capture de notre application présentant l’évolution temporelle de l’indice du bonheur entre la France et la Finlande. 
+
+![](evol_temp_pays.png)
+
+</br>
+
+Ces comparaisons temporelles permettant d’avoir une idée sur les trajectoires des différentes variables selon les zones géographiques, et de savoir donc les régions / pays qui se ressemblent le plus dans leur évolution, selon les différentes variables. 
+
+</br>
+
+## Onglet Cartographie
+
+L’onglet Cartographie permet de visualiser sur la carte du monde nos différentes variables. Comme ce sont des variables continues, nous avons coloré les pays avec une échelle de couleurs allant de jaune (faibles valeurs) à rouge (fortes valeurs).
+
+L’interface permet à l’utilisateur de choisir l’année qu’il veut représenter ainsi que la variable. Pour certaines années, les données manquantes sont plus nombreuses et donc les pays grisés plus fréquents. La carte est interactive : quand l’utilisateur survole un pays, le nom du pays et la valeur de la variable apparaissent.
+
+Ci-dessous une capture d'écran d'une cartographie :
+
+![](carto.png)
+
+</br>
+
+Concernant l’indice du bonheur, nous constatons une disparité importante entre les régions. Les pays du Nord ainsi que l’Océanie semblent être les pays où cet indice est le plus élevé. A l’inverse, l’Afrique ressort immédiatement comme étant le continent le moins heureux.
+
+Globalement, on constate que pour toutes les variables, à part la perception de la corruption, les couleurs restent proches pour un même pays. Ce constat est confirmé par le corrélogramme dans l’onglet Modèles, puisque toutes les variables sont corrélées positivement sauf la perception de corruption.
+
+
+</br>
+
+# Régression linéaire : onglet Modèles
+
+L'onglet Modèles comporte trois sous-onglets : une partie corrélogramme, une partie régression linéaire simple et une partie régression linéaire multiple.
+
+### Sous-onglet Corrélogramme
+
+L'utilisateur peut observer les corrélations entre les différentes variables de notre jeu de données. De plus, il est possible de filtrer sur les zones géographiques ainsi que sur les années. Grâce à ce sous-onglet, l'utilisateur peut se faire une idée des variables qui sont pertinentes pour la régression linéaire multiple entre autres, et s'assure qu'il n'y a pas de problème de colinéarité.
+
+![](correlo.png)
+
+</br>
+
+Globalement, nous constatons que l’indice de bonheur est corrélé fortement positivement avec le log capital par tête, l’espérance de vie en bonne santé et le soutien social. Cet indice est également corrélé positivement avec la liberté de faire des choix. Au contraire, l’indice de bonheur est corrélé négativement avec les perceptions de corruption. La générosité ne semble pas corrélée avec l’indice de bonheur.
+
+Cette première étape nous rassure sur le fait qu'il n'y a pas de problème de colinéarité, ce qui pourrait mettre en défaut notre régression à venir ; en effet, aucune corrélation n'est supérieure au seuil de 0.8. 
+
+</br>
+
+### Sous-onglet Régression linéaire simple
+
+L’utilisateur peut choisir une variable parmi la liste de variables explicatives afin de visualiser son lien avec l’indice du bonheur. Ensuite, un nuage de points avec un ajustement linéaire est affiché. Il y a également le résultat de la régression simple entre la variable explicative choisie et la variable à expliquer (indice du bonheur). Enfin, une ACF est présente afin de visualiser les coefficients de corrélation entre les résidus de chaque point et ceux des points de la ligne suivante.
+
+![](reg_lin_simple.png)
+
+</br>
+
+Rappelons que la régression simple donne simplement la corrélation entre les deux variables représentées.
+
+</br>
+
+### Sous-onglet Régression linéaire multiple
+
+L’utilisateur peut sélectionner plusieurs prédicteurs afin d’expliquer l’indice du bonheur. Le résultat de la régression est affiché sous forme de tableau. Il y a également un test de Ramsey présent afin de vérifier que le modèle est bien spécifié. Des graphiques sur les résidus sont visibles, afin de s’assurer que les hypothèses de normalité et d'homoscédasticité sont vérifiées.
+
+![](reg_lin_mult.png)
+
+</br>
+
+Pour les différents modèles possibles (RLS et RLM), l’utilisateur sélectionne l’année pour laquelle il souhaite faire le test. De plus l’utilisateur peut choisir la zone géographique qu’il souhaite étudier. Par défaut tous les pays sont pris en compte et l’année de référence est la dernière de notre base de données : 2021.
+
+
+</br>
+
+# Conclusion
+
+La première partie de notre conclusion vise à répondre à la problématique pour laquelle nous avons construit notre application, c'est-à-dire expliquer l'indice du bonheur par les prédicteurs dont nous disposions. 
+
+Nous déduisons de notre étude que la qualité de vie joue dans le bonheur d’une population. De manière plus précise : 
+
+- On voit immédiatement que les pays disposant d’un revenu moyen par habitant plus élevé affichent des moyennes d’indice de bonheur également plus élevées.
+- La santé constitue un prédicteur important de l’indice de bonheur : les pays où les gens vivent plus longtemps ont un indice de bonheur moyen supérieur. La même relation existe avec d’autres métriques de santé, comme la mortalité infantile. 
+- Les deux indicateurs pour lesquels les coefficients sont les plus importants sont l’aide sociale et la liberté de faire des choix. Ainsi, un pays qui dispose d'une aide sociale importante (logement, allocations...) est un pays où l’on est plus heureux. C’est d’ailleurs la variable pour laquelle le coefficient était le plus important ! De même, le degré de liberté de la société dans laquelle nous vivons détermine crucialement l’univers des possibles pour mener notre vie. La relation est claire et positive : les pays dans lesquels les  personnes se sentent plus libres et en contrôle de leur vie ont aussi des indices de bonheur plus élevés. 
+- Enfin, résultat logique que nous avons confirmé par notre analyse : plus la perception de corruption gouvernementale est importante, plus l’indice de bonheur diminue. 
+
+Nous avons également constaté, grâce à la régression comprenant les zones géographiques, que les résultats variaient en fonction des zones géographiques, notamment avec l’Afrique. Cela peut s’expliquer par le fait que ce continent est moins développé et que les conditions de vie sont plus difficiles comme l’accès au soin, à la santé ou à l’éducation.
+
+Concernant la générosité, nous n’avons pas obtenu de relation assez forte pour notre permettre de conclure qu’une hausse de la générosité entraînait une hausse de bonheur (d’ailleurs, ces deux variables n’étaient même pas corrélées d’après notre matrice de corrélation).
+
+</br>
+
+La deuxième partie de notre conclusion vise à rendre compte d'aspects logiciels, de remarques et de problèmes techniques rencontrés lors de la création de notre application RShiny. 
+
+- L’ouverture du jeu de données directement depuis l’application nous a posé problème. Il fallait que l’ui et le server contiennent les librairies et le jeu de données pour que cela fonctionne. Nous avons tout mis dans un seul et unique fichier global pour simplifier l’écriture du code.
+
+- Pour les différents graphiques : gérer les espacements entre le titre du graphique et le graphique ainsi que l’espace du graphique dans la fenêtre.
+
+- Onglet modèles (sous-onglet régression linéaire simple) : nuage de points, problème pour son affichage. L’utilisateur sélectionne la variable explicative souhaitée mais lorsque nous voulions afficher le graphique nous avions une erreur. Celle-ci était due à la transformation du jeu de données où l’on ne sélectionne que la variable explicative choisie et la variable à expliquer : indice du bonheur. Nous ne pouvions pas dans le graphique faire un appel du type « aes(x=input$choix_colonne) ». Pour réussir à surmonter notre problème nous avons pour le graphique sélectionner le numéro de la colonne correspondant à la colonne du choix de la variable explicative. Ce code n’est pas le plus optimal puisqu’il ne faut pas changer l’ordre dans le dataframe sinon le graphique ne sera plus forcément celui souhaité. Or ici cela ne pose pas de problème en l’état et permet l’affichage du nuage de points souhaité.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
