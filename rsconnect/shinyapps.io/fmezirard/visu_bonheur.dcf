@@ -1,0 +1,14 @@
+name: visu_bonheur
+title: visu_bonheur
+username:
+account: fmezirard
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5867404
+bundleId: 5691773
+url: https://fmezirard.shinyapps.io/visu_bonheur/
+when: 1647444807.55884
+lastSyncTime: 1647444807.55884
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: modele_shiny_leaflet.R|README.md|Rendu_visu.html|Rendu_visu.rmd|images
